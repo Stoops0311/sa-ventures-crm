@@ -1,0 +1,198 @@
+<h2>Admin Attendance — Team Calendar Grid</h2>
+<p class="subtitle">The admin's default attendance view: rows = team members, columns = days of the month</p>
+
+<div class="mockup">
+  <div class="mockup-header">
+    <div style="display:flex;justify-content:space-between;align-items:center;width:100%;">
+      <span>/admin/attendance</span>
+      <span style="opacity:0.5">March 2026</span>
+    </div>
+  </div>
+  <div class="mockup-body" style="padding:0;overflow-x:auto;">
+    <!-- Month Nav -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #e5e5e5;">
+      <button class="mock-button" style="padding:4px 12px;font-size:13px;">← Feb</button>
+      <div style="font-weight:600;font-size:16px;">March 2026</div>
+      <button class="mock-button" style="padding:4px 12px;font-size:13px;">Apr →</button>
+    </div>
+
+    <!-- Summary Stats Row -->
+    <div style="display:flex;gap:24px;padding:12px 20px;background:#fafafa;border-bottom:1px solid #e5e5e5;font-size:13px;">
+      <div><span style="color:#888;">Team avg hours/day:</span> <strong>7.2h</strong></div>
+      <div><span style="color:#888;">Avg attendance rate:</span> <strong>92%</strong></div>
+      <div><span style="color:#888;">Working days this month:</span> <strong>22</strong></div>
+    </div>
+
+    <!-- Calendar Grid -->
+    <table style="width:100%;border-collapse:collapse;font-size:12px;">
+      <thead>
+        <tr style="background:#f5f5f5;">
+          <th style="text-align:left;padding:10px 12px;border-bottom:1px solid #e5e5e5;position:sticky;left:0;background:#f5f5f5;min-width:140px;">Team Member</th>
+          <th style="padding:6px 2px;border-bottom:1px solid #e5e5e5;min-width:28px;color:#ccc;" title="Sunday">S</th>
+          <th style="padding:6px 2px;border-bottom:1px solid #e5e5e5;min-width:28px;">M</th>
+          <th style="padding:6px 2px;border-bottom:1px solid #e5e5e5;min-width:28px;">T</th>
+          <th style="padding:6px 2px;border-bottom:1px solid #e5e5e5;min-width:28px;">W</th>
+          <th style="padding:6px 2px;border-bottom:1px solid #e5e5e5;min-width:28px;">T</th>
+          <th style="padding:6px 2px;border-bottom:1px solid #e5e5e5;min-width:28px;">F</th>
+          <th style="padding:6px 2px;border-bottom:1px solid #e5e5e5;min-width:28px;color:#ccc;" title="Saturday">S</th>
+          <th style="padding:6px 2px;border-bottom:1px solid #e5e5e5;min-width:28px;color:#ccc;">S</th>
+          <th style="padding:6px 2px;border-bottom:1px solid #e5e5e5;min-width:28px;">M</th>
+          <th style="padding:6px 2px;border-bottom:1px solid #e5e5e5;min-width:28px;">T</th>
+          <th style="padding:6px 2px;border-bottom:1px solid #e5e5e5;min-width:28px;">W</th>
+          <!-- ...more days... -->
+          <th style="padding:6px 4px;border-bottom:1px solid #e5e5e5;border-left:1px solid #e5e5e5;min-width:50px;text-align:right;font-size:11px;">Avg</th>
+        </tr>
+        <tr style="background:#f5f5f5;">
+          <th style="text-align:left;padding:2px 12px 8px;border-bottom:1px solid #ddd;position:sticky;left:0;background:#f5f5f5;font-weight:400;color:#999;font-size:11px;"></th>
+          <th style="padding:2px 2px 8px;border-bottom:1px solid #ddd;font-weight:400;color:#bbb;font-size:10px;">1</th>
+          <th style="padding:2px 2px 8px;border-bottom:1px solid #ddd;font-weight:400;color:#bbb;font-size:10px;">2</th>
+          <th style="padding:2px 2px 8px;border-bottom:1px solid #ddd;font-weight:400;color:#bbb;font-size:10px;">3</th>
+          <th style="padding:2px 2px 8px;border-bottom:1px solid #ddd;font-weight:400;color:#bbb;font-size:10px;">4</th>
+          <th style="padding:2px 2px 8px;border-bottom:1px solid #ddd;font-weight:400;color:#bbb;font-size:10px;">5</th>
+          <th style="padding:2px 2px 8px;border-bottom:1px solid #ddd;font-weight:400;color:#bbb;font-size:10px;">6</th>
+          <th style="padding:2px 2px 8px;border-bottom:1px solid #ddd;font-weight:400;color:#bbb;font-size:10px;">7</th>
+          <th style="padding:2px 2px 8px;border-bottom:1px solid #ddd;font-weight:400;color:#bbb;font-size:10px;">8</th>
+          <th style="padding:2px 2px 8px;border-bottom:1px solid #ddd;font-weight:400;color:#bbb;font-size:10px;">9</th>
+          <th style="padding:2px 2px 8px;border-bottom:1px solid #ddd;font-weight:400;color:#bbb;font-size:10px;">10</th>
+          <th style="padding:2px 2px 8px;border-bottom:1px solid #ddd;font-weight:400;color:#bbb;font-size:10px;">11</th>
+          <th style="padding:2px 4px 8px;border-bottom:1px solid #ddd;border-left:1px solid #e5e5e5;font-weight:400;color:#bbb;font-size:10px;">hrs</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Row: Admin user -->
+        <tr>
+          <td style="padding:10px 12px;border-bottom:1px solid #f0f0f0;position:sticky;left:0;background:white;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:24px;height:24px;background:#e8e8e8;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;">RS</div>
+              <div>
+                <div style="font-weight:500;font-size:12px;">Rahul Sharma</div>
+                <div style="font-size:10px;color:#999;">Admin</div>
+              </div>
+            </div>
+          </td>
+          <!-- S1: weekend -->
+          <td style="padding:4px 2px;text-align:center;border-bottom:1px solid #f0f0f0;background:#fafafa;">
+            <div style="width:10px;height:10px;background:#e5e5e5;margin:auto;" title="Weekend"></div>
+          </td>
+          <!-- M2: full day -->
+          <td style="padding:4px 2px;text-align:center;border-bottom:1px solid #f0f0f0;cursor:pointer;" title="8.2 hrs | 3 sessions">
+            <div style="width:10px;height:10px;background:#22c55e;margin:auto;"></div>
+          </td>
+          <!-- T3: full day -->
+          <td style="padding:4px 2px;text-align:center;border-bottom:1px solid #f0f0f0;cursor:pointer;" title="7.5 hrs | 2 sessions">
+            <div style="width:10px;height:10px;background:#22c55e;margin:auto;"></div>
+          </td>
+          <!-- W4: partial -->
+          <td style="padding:4px 2px;text-align:center;border-bottom:1px solid #f0f0f0;cursor:pointer;" title="3.1 hrs | 1 session">
+            <div style="width:10px;height:10px;background:#f59e0b;margin:auto;"></div>
+          </td>
+          <!-- T5: full -->
+          <td style="padding:4px 2px;text-align:center;border-bottom:1px solid #f0f0f0;cursor:pointer;" title="8.0 hrs | 2 sessions">
+            <div style="width:10px;height:10px;background:#22c55e;margin:auto;"></div>
+          </td>
+          <!-- F6: full -->
+          <td style="padding:4px 2px;text-align:center;border-bottom:1px solid #f0f0f0;cursor:pointer;" title="7.8 hrs | 2 sessions">
+            <div style="width:10px;height:10px;background:#22c55e;margin:auto;"></div>
+          </td>
+          <!-- S7: weekend -->
+          <td style="padding:4px 2px;text-align:center;border-bottom:1px solid #f0f0f0;background:#fafafa;">
+            <div style="width:10px;height:10px;background:#e5e5e5;margin:auto;" title="Weekend"></div>
+          </td>
+          <!-- S8: weekend -->
+          <td style="padding:4px 2px;text-align:center;border-bottom:1px solid #f0f0f0;background:#fafafa;">
+            <div style="width:10px;height:10px;background:#e5e5e5;margin:auto;" title="Weekend"></div>
+          </td>
+          <!-- M9: full -->
+          <td style="padding:4px 2px;text-align:center;border-bottom:1px solid #f0f0f0;cursor:pointer;" title="8.5 hrs | 2 sessions">
+            <div style="width:10px;height:10px;background:#22c55e;margin:auto;"></div>
+          </td>
+          <!-- T10: absent -->
+          <td style="padding:4px 2px;text-align:center;border-bottom:1px solid #f0f0f0;" title="Absent">
+            <div style="width:10px;height:10px;background:#ef4444;margin:auto;"></div>
+          </td>
+          <!-- W11: today (current) -->
+          <td style="padding:4px 2px;text-align:center;border-bottom:1px solid #f0f0f0;background:#fff7ed;cursor:pointer;" title="Today — 4.2 hrs so far | 1 session (active)">
+            <div style="width:10px;height:10px;background:#22c55e;margin:auto;outline:2px solid #f97316;outline-offset:2px;"></div>
+          </td>
+          <!-- Avg -->
+          <td style="padding:4px 4px;text-align:right;border-bottom:1px solid #f0f0f0;border-left:1px solid #f0f0f0;font-weight:500;font-size:11px;">7.4h</td>
+        </tr>
+
+        <!-- Row: Salesperson 1 -->
+        <tr>
+          <td style="padding:10px 12px;border-bottom:1px solid #f0f0f0;position:sticky;left:0;background:white;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:24px;height:24px;background:#e8e8e8;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;">PK</div>
+              <div>
+                <div style="font-weight:500;font-size:12px;">Priya Kumar</div>
+                <div style="font-size:10px;color:#999;">Salesperson</div>
+              </div>
+            </div>
+          </td>
+          <td style="padding:4px 2px;text-align:center;border-bottom:1px solid #f0f0f0;background:#fafafa;"><div style="width:10px;height:10px;background:#e5e5e5;margin:auto;"></div></td>
+          <td style="padding:4px 2px;text-align:center;border-bottom:1px solid #f0f0f0;cursor:pointer;" title="9.0 hrs"><div style="width:10px;height:10px;background:#22c55e;margin:auto;"></div></td>
+          <td style="padding:4px 2px;text-align:center;border-bottom:1px solid #f0f0f0;cursor:pointer;" title="8.1 hrs"><div style="width:10px;height:10px;background:#22c55e;margin:auto;"></div></td>
+          <td style="padding:4px 2px;text-align:center;border-bottom:1px solid #f0f0f0;cursor:pointer;" title="7.5 hrs"><div style="width:10px;height:10px;background:#22c55e;margin:auto;"></div></td>
+          <td style="padding:4px 2px;text-align:center;border-bottom:1px solid #f0f0f0;cursor:pointer;" title="8.3 hrs"><div style="width:10px;height:10px;background:#22c55e;margin:auto;"></div></td>
+          <td style="padding:4px 2px;text-align:center;border-bottom:1px solid #f0f0f0;cursor:pointer;" title="7.0 hrs"><div style="width:10px;height:10px;background:#22c55e;margin:auto;"></div></td>
+          <td style="padding:4px 2px;text-align:center;border-bottom:1px solid #f0f0f0;background:#fafafa;"><div style="width:10px;height:10px;background:#e5e5e5;margin:auto;"></div></td>
+          <td style="padding:4px 2px;text-align:center;border-bottom:1px solid #f0f0f0;background:#fafafa;"><div style="width:10px;height:10px;background:#e5e5e5;margin:auto;"></div></td>
+          <td style="padding:4px 2px;text-align:center;border-bottom:1px solid #f0f0f0;cursor:pointer;" title="8.7 hrs"><div style="width:10px;height:10px;background:#22c55e;margin:auto;"></div></td>
+          <td style="padding:4px 2px;text-align:center;border-bottom:1px solid #f0f0f0;cursor:pointer;" title="7.9 hrs"><div style="width:10px;height:10px;background:#22c55e;margin:auto;"></div></td>
+          <td style="padding:4px 2px;text-align:center;border-bottom:1px solid #f0f0f0;background:#fff7ed;cursor:pointer;" title="Today — 5.1 hrs"><div style="width:10px;height:10px;background:#22c55e;margin:auto;outline:2px solid #f97316;outline-offset:2px;"></div></td>
+          <td style="padding:4px 4px;text-align:right;border-bottom:1px solid #f0f0f0;border-left:1px solid #f0f0f0;font-weight:500;font-size:11px;">8.2h</td>
+        </tr>
+
+        <!-- Row: Salesperson 2 -->
+        <tr>
+          <td style="padding:10px 12px;border-bottom:1px solid #f0f0f0;position:sticky;left:0;background:white;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:24px;height:24px;background:#e8e8e8;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;">AV</div>
+              <div>
+                <div style="font-weight:500;font-size:12px;">Amit Verma</div>
+                <div style="font-size:10px;color:#999;">Salesperson</div>
+              </div>
+            </div>
+          </td>
+          <td style="padding:4px 2px;text-align:center;border-bottom:1px solid #f0f0f0;background:#fafafa;"><div style="width:10px;height:10px;background:#e5e5e5;margin:auto;"></div></td>
+          <td style="padding:4px 2px;text-align:center;border-bottom:1px solid #f0f0f0;cursor:pointer;" title="6.2 hrs"><div style="width:10px;height:10px;background:#22c55e;margin:auto;"></div></td>
+          <td style="padding:4px 2px;text-align:center;border-bottom:1px solid #f0f0f0;" title="Absent"><div style="width:10px;height:10px;background:#ef4444;margin:auto;"></div></td>
+          <td style="padding:4px 2px;text-align:center;border-bottom:1px solid #f0f0f0;cursor:pointer;" title="2.5 hrs"><div style="width:10px;height:10px;background:#f59e0b;margin:auto;"></div></td>
+          <td style="padding:4px 2px;text-align:center;border-bottom:1px solid #f0f0f0;cursor:pointer;" title="7.1 hrs"><div style="width:10px;height:10px;background:#22c55e;margin:auto;"></div></td>
+          <td style="padding:4px 2px;text-align:center;border-bottom:1px solid #f0f0f0;cursor:pointer;" title="8.0 hrs"><div style="width:10px;height:10px;background:#22c55e;margin:auto;"></div></td>
+          <td style="padding:4px 2px;text-align:center;border-bottom:1px solid #f0f0f0;background:#fafafa;"><div style="width:10px;height:10px;background:#e5e5e5;margin:auto;"></div></td>
+          <td style="padding:4px 2px;text-align:center;border-bottom:1px solid #f0f0f0;background:#fafafa;"><div style="width:10px;height:10px;background:#e5e5e5;margin:auto;"></div></td>
+          <td style="padding:4px 2px;text-align:center;border-bottom:1px solid #f0f0f0;cursor:pointer;" title="7.3 hrs"><div style="width:10px;height:10px;background:#22c55e;margin:auto;"></div></td>
+          <td style="padding:4px 2px;text-align:center;border-bottom:1px solid #f0f0f0;cursor:pointer;" title="6.8 hrs"><div style="width:10px;height:10px;background:#22c55e;margin:auto;"></div></td>
+          <td style="padding:4px 2px;text-align:center;border-bottom:1px solid #f0f0f0;background:#fff7ed;" title="Today — not yet online"><div style="width:10px;height:10px;background:#ef4444;margin:auto;outline:2px solid #f97316;outline-offset:2px;"></div></td>
+          <td style="padding:4px 4px;text-align:right;border-bottom:1px solid #f0f0f0;border-left:1px solid #f0f0f0;font-weight:500;font-size:11px;">6.3h</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Legend -->
+    <div style="display:flex;gap:20px;padding:12px 20px;border-top:1px solid #e5e5e5;font-size:11px;color:#888;align-items:center;">
+      <div style="display:flex;align-items:center;gap:4px;"><div style="width:8px;height:8px;background:#22c55e;"></div> Full day (6+ hrs)</div>
+      <div style="display:flex;align-items:center;gap:4px;"><div style="width:8px;height:8px;background:#f59e0b;"></div> Partial (&lt;6 hrs)</div>
+      <div style="display:flex;align-items:center;gap:4px;"><div style="width:8px;height:8px;background:#ef4444;"></div> Absent</div>
+      <div style="display:flex;align-items:center;gap:4px;"><div style="width:8px;height:8px;background:#e5e5e5;"></div> Weekend</div>
+      <div style="display:flex;align-items:center;gap:4px;"><div style="width:8px;height:8px;background:#22c55e;outline:2px solid #f97316;outline-offset:1px;"></div> Today</div>
+      <div style="margin-left:auto;color:#aaa;">Click any cell to see day detail →</div>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top:24px;padding:16px;background:#f9fafb;border:1px solid #e5e5e5;">
+  <h3 style="margin:0 0 8px;">How it works</h3>
+  <ul style="margin:0;padding-left:20px;font-size:13px;color:#555;line-height:1.8;">
+    <li><strong>Green dot</strong> = 6+ hours of CRM activity (full day)</li>
+    <li><strong>Yellow dot</strong> = Under 6 hours (partial day)</li>
+    <li><strong>Red dot</strong> = Zero sessions recorded (absent)</li>
+    <li><strong>Gray dot</strong> = Weekend (non-working day)</li>
+    <li><strong>Orange ring</strong> = Today's cell, highlighted for quick reference</li>
+    <li>Hover any cell to see hours + session count in tooltip</li>
+    <li>Click any cell to open the <strong>Day Detail</strong> panel (next mockup)</li>
+    <li>Avg column on the right shows daily average hours for the month</li>
+    <li>Top summary bar shows team-wide aggregates</li>
+  </ul>
+</div>
