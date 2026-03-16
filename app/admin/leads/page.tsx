@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useCallback } from "react"
+import { Suspense, useState, useMemo, useCallback } from "react"
 import { useSearchParams } from "next/navigation"
 import { usePaginatedQuery, useQuery } from "convex/react"
 import { api } from "@/convex/_generated/api"
@@ -15,6 +15,14 @@ import type { Id } from "@/convex/_generated/dataModel"
 import { AddLeadDialog } from "@/components/admin/add-lead-dialog"
 
 export default function AdminLeadsPage() {
+  return (
+    <Suspense>
+      <AdminLeadsContent />
+    </Suspense>
+  )
+}
+
+function AdminLeadsContent() {
   const searchParams = useSearchParams()
 
   // Initialize filters from URL params
