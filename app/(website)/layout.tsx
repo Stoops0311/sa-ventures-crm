@@ -24,9 +24,10 @@ export default function WebsiteLayout({
 }) {
   return (
     <>
-      <Navbar />
+      {/* Navbar and Footer hidden until RERA license obtained */}
+      {/* <Navbar /> */}
       <main className="min-h-screen">{children}</main>
-      <Footer />
+      {/* <Footer /> */}
       <Toaster position="top-right" />
     </>
   )
