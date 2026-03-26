@@ -47,7 +47,7 @@ export const getTeamMonthGrid = query({
     // Get all admin + salesperson users
     const allUsers = await ctx.db.query("users").collect()
     const teamUsers = allUsers.filter(
-      (u) => u.role === "admin" || u.role === "salesperson" || u.role === "hr" || u.role === "vehicle"
+      (u) => u.role === "admin" || u.role === "salesperson" || u.role === "hr" || u.role === "vehicle" || u.role === "receptionist"
     )
 
     // Build date range strings for the month

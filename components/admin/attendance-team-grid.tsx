@@ -14,7 +14,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { getRoleStyle } from "@/lib/constants"
+import { getRoleStyle, getBreakTypeLabel } from "@/lib/constants"
 import { isWeekend, getDateString, getDayOfWeek } from "@/lib/date-utils"
 import { cn } from "@/lib/utils"
 import { HugeiconsIcon } from "@hugeicons/react"
@@ -24,6 +24,7 @@ import {
   Clock01Icon,
   UserCheck01Icon,
   Calendar03Icon,
+  Coffee01Icon,
 } from "@hugeicons/core-free-icons"
 import { AttendanceDayDetail } from "@/components/shared/attendance-day-detail"
 
@@ -42,6 +43,35 @@ export function AttendanceTeamGrid() {
   const isLoading = data === undefined
 
   const todayStr = getDateString(now)
+
+  // Break time data
+  const monthPrefix = `${year}-${String(month).padStart(2, "0")}`
+  const userIds = data?.teamData.map((m) => m.userId) ?? []
+  const breakData = useQuery(
+    api.breakTime.getBreaksForDateRange,
+    userIds.length > 0
+      ? { userIds, startDate: `${monthPrefix}-01`, endDate: `${monthPrefix}-31` }
+      : "skip"
+  )
+  const breakSettings = useQuery(api.breakTime.getSettings)
+  const teamBreakStatus = useQuery(api.breakTime.getTeamBreakStatus)
+  const warningThreshold = breakSettings?.warningThresholdMinutes ?? 90
+
+  // Helper: get break stats for a user on a specific day
+  function getDayBreakStats(userId: string, date: string) {
+    if (!breakData) return { count: 0, totalMs: 0 }
+    const dayBreaks = breakData.filter((b) => b.userId === userId && b.date === date)
+    const totalMs = dayBreaks.reduce((sum, b) => {
+      const end = b.endTime ?? Date.now()
+      return sum + (end - b.startTime)
+    }, 0)
+    return { count: dayBreaks.length, totalMs }
+  }
+
+  // Helper: get current break info for a user
+  function getUserBreak(userId: string) {
+    return teamBreakStatus?.find((b) => b.userId === userId) ?? null
+  }
 
   // Day detail sheet state
   const [selectedUserId, setSelectedUserId] = useState<Id<"users"> | undefined>()
@@ -249,8 +279,28 @@ export function AttendanceTeamGrid() {
                               )}
                             </div>
                             <div>
-                              <div className="text-[11px] font-medium leading-tight truncate max-w-[100px]">
-                                {member.name}
+                              <div className="flex items-center gap-1">
+                                <div className="text-[11px] font-medium leading-tight truncate max-w-[100px]">
+                                  {member.name}
+                                </div>
+                                {(() => {
+                                  const brk = getUserBreak(member.userId)
+                                  if (!brk) return null
+                                  const typeLabel = brk.breakType ? getBreakTypeLabel(brk.breakType) : "On Break"
+                                  return (
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <div className="flex items-center gap-0.5">
+                                          <HugeiconsIcon icon={Coffee01Icon} className="size-3 text-amber-500" strokeWidth={2} />
+                                        </div>
+                                      </TooltipTrigger>
+                                      <TooltipContent side="right" className="text-[10px]">
+                                        {typeLabel}
+                                        {brk.remarks && `: ${brk.remarks}`}
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  )
+                                })()}
                               </div>
                               <Badge
                                 variant="outline"
@@ -292,38 +342,60 @@ export function AttendanceTeamGrid() {
                                 {isFuture && !weekend ? (
                                   <div className="size-2.5" />
                                 ) : (
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <div
-                                        className={cn(
-                                          "size-2.5 transition-transform hover:scale-150",
-                                          day.status === "present" && "bg-emerald-500",
-                                          day.status === "partial" && "bg-amber-400",
-                                          day.status === "absent" && !weekend && "bg-red-400",
-                                          day.status === "weekend" && "bg-muted-foreground/20",
-                                          weekend && "bg-muted-foreground/20",
-                                          isToday && "ring-2 ring-primary ring-offset-1"
-                                        )}
-                                      />
-                                    </TooltipTrigger>
-                                    <TooltipContent
-                                      side="top"
-                                      className="text-[10px]"
-                                    >
-                                      {weekend ? (
-                                        "Weekend"
-                                      ) : day.status === "absent" ? (
-                                        "Absent"
-                                      ) : (
-                                        <span className="tabular-nums">
-                                          {day.totalHours.toFixed(1)}h
-                                          {" \u00B7 "}
-                                          {day.sessionCount} session
-                                          {day.sessionCount !== 1 ? "s" : ""}
-                                        </span>
-                                      )}
-                                    </TooltipContent>
-                                  </Tooltip>
+                                  (() => {
+                                    const breakStats = getDayBreakStats(member.userId, day.date)
+                                    const breakMinutes = breakStats.totalMs / (1000 * 60)
+                                    const isExcessiveBreak = breakStats.count > 0 && breakMinutes > warningThreshold
+
+                                    return (
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <div className="relative">
+                                            <div
+                                              className={cn(
+                                                "size-2.5 transition-transform hover:scale-150",
+                                                day.status === "present" && "bg-emerald-500",
+                                                day.status === "partial" && "bg-amber-400",
+                                                day.status === "absent" && !weekend && "bg-red-400",
+                                                day.status === "weekend" && "bg-muted-foreground/20",
+                                                weekend && "bg-muted-foreground/20",
+                                                isToday && "ring-2 ring-primary ring-offset-1"
+                                              )}
+                                            />
+                                            {isExcessiveBreak && (
+                                              <div className="absolute -top-1 -right-1 size-1.5 bg-amber-500" title="Excessive break time" />
+                                            )}
+                                          </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent
+                                          side="top"
+                                          className="text-[10px]"
+                                        >
+                                          {weekend ? (
+                                            "Weekend"
+                                          ) : day.status === "absent" ? (
+                                            "Absent"
+                                          ) : (
+                                            <div className="flex flex-col gap-0.5">
+                                              <span className="tabular-nums">
+                                                {day.totalHours.toFixed(1)}h
+                                                {" \u00B7 "}
+                                                {day.sessionCount} session
+                                                {day.sessionCount !== 1 ? "s" : ""}
+                                              </span>
+                                              {breakStats.count > 0 && (
+                                                <span className="tabular-nums text-amber-500">
+                                                  {breakStats.count} break{breakStats.count !== 1 ? "s" : ""}
+                                                  {" \u00B7 "}
+                                                  {Math.round(breakMinutes)}m
+                                                </span>
+                                              )}
+                                            </div>
+                                          )}
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    )
+                                  })()
                                 )}
                               </div>
                             </td>

@@ -1,7 +1,7 @@
 import type { QueryCtx, MutationCtx } from "../_generated/server"
 import type { Doc } from "../_generated/dataModel"
 
-type Role = "admin" | "salesperson" | "dsm" | "hr" | "vehicle"
+type Role = "admin" | "salesperson" | "dsm" | "hr" | "vehicle" | "receptionist"
 
 function getRoleFromIdentity(
   identity: Awaited<ReturnType<QueryCtx["auth"]["getUserIdentity"]>>

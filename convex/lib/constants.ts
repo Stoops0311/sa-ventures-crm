@@ -5,6 +5,26 @@ export const TOTAL_TRAINING_DAYS = 7
 export const SESSION_GAP_MS = 5 * 60 * 1000 // 5 minutes — gap before new session starts
 export const FULL_DAY_HOURS = 6 // hours threshold for "full day" vs "partial"
 
+// Break Time constants
+export const STALE_BREAK_THRESHOLD_MS = 2 * 60 * 60 * 1000 // 2 hours — auto-close stale breaks
+export const DEFAULT_BREAK_WARNING_MINUTES = 90 // default daily break threshold for flagging
+
+export const BREAK_TYPES = [
+  { value: "lunch",             label: "Lunch Break" },
+  { value: "other_break",       label: "Other Break" },
+  { value: "training",          label: "Training" },
+  { value: "huddle",            label: "Huddle" },
+  { value: "onsite_visit",      label: "On Site Visit" },
+  { value: "offline_marketing", label: "Offline Marketing" },
+  { value: "other",             label: "Other" },
+] as const
+
+export type BreakType = (typeof BREAK_TYPES)[number]["value"]
+
+export function getBreakTypeLabel(value: string): string {
+  return BREAK_TYPES.find((b) => b.value === value)?.label ?? value
+}
+
 export const LEAD_STATUSES = [
   "New",
   "No Response",
@@ -258,6 +278,93 @@ export function isValidMessageStatus(status: string): status is MessageStatus {
 
 export function isValidTriggerType(type: string): type is TriggerType {
   return (TRIGGER_TYPES as readonly string[]).includes(type)
+}
+
+// After-Sales Process Constants
+export const AFTER_SALES_STEPS = [
+  { key: "booking_form_fillup", label: "Booking Form Fill-up", category: "documentation" },
+  { key: "share_project_documents", label: "Share Project Documents", category: "documentation" },
+  { key: "loan_document_collection", label: "Loan Document Collection", category: "documentation" },
+  { key: "loan_processing", label: "Loan Processing", category: "loan" },
+  { key: "ocr_payment_collection", label: "OCR / Down Payment Collection", category: "financial" },
+  { key: "draft_agreement_preparation", label: "Draft Agreement Preparation", category: "documentation" },
+  { key: "stamp_duty_payment", label: "Stamp Duty Payment", category: "financial" },
+  { key: "registration", label: "Property Registration", category: "legal" },
+  { key: "original_document_collection", label: "Original Document Collection", category: "documentation" },
+  { key: "bank_disbursement", label: "Bank Disbursement", category: "financial" },
+] as const
+
+export type AfterSalesStepKey = (typeof AFTER_SALES_STEPS)[number]["key"]
+
+export const AFTER_SALES_PROCESS_STATUSES = ["in_progress", "completed", "on_hold"] as const
+export type AfterSalesProcessStatus = (typeof AFTER_SALES_PROCESS_STATUSES)[number]
+
+export const AFTER_SALES_STEP_STATUSES = ["pending", "in_progress", "completed", "skipped"] as const
+export type AfterSalesStepStatus = (typeof AFTER_SALES_STEP_STATUSES)[number]
+
+// Steps that accept financial amounts
+export const FINANCIAL_STEPS: AfterSalesStepKey[] = [
+  "ocr_payment_collection",
+  "stamp_duty_payment",
+]
+
+export const LOAN_STEP: AfterSalesStepKey = "loan_processing"
+export const REGISTRATION_STEP: AfterSalesStepKey = "registration"
+export const DISBURSEMENT_STEP: AfterSalesStepKey = "bank_disbursement"
+export const BOOKING_FORM_STEP: AfterSalesStepKey = "booking_form_fillup"
+
+export function isValidAfterSalesStep(step: string): step is AfterSalesStepKey {
+  return AFTER_SALES_STEPS.some((s) => s.key === step)
+}
+
+export function isValidAfterSalesProcessStatus(status: string): status is AfterSalesProcessStatus {
+  return (AFTER_SALES_PROCESS_STATUSES as readonly string[]).includes(status)
+}
+
+export function getAfterSalesStepIndex(stepKey: string): number {
+  return AFTER_SALES_STEPS.findIndex((s) => s.key === stepKey)
+}
+
+// Visit Constants
+export const VISIT_LOCATIONS = ["office", "site", "other"] as const
+export type VisitLocation = (typeof VISIT_LOCATIONS)[number]
+
+export const VISIT_CHECKIN_STATUSES = ["expected", "arrived", "no_show"] as const
+export type VisitCheckinStatus = (typeof VISIT_CHECKIN_STATUSES)[number]
+
+export function isValidVisitLocation(location: string): location is VisitLocation {
+  return (VISIT_LOCATIONS as readonly string[]).includes(location)
+}
+
+export function isValidVisitCheckinStatus(status: string): status is VisitCheckinStatus {
+  return (VISIT_CHECKIN_STATUSES as readonly string[]).includes(status)
+}
+
+// Petty Cash Constants
+export const PETTY_CASH_TYPES = ["given", "returned"] as const
+export type PettyCashType = (typeof PETTY_CASH_TYPES)[number]
+
+export const PETTY_CASH_CATEGORIES = [
+  { value: "fuel", label: "Fuel" },
+  { value: "office_supplies", label: "Office Supplies" },
+  { value: "food_beverages", label: "Food & Beverages" },
+  { value: "travel", label: "Travel" },
+  { value: "courier", label: "Courier / Postage" },
+  { value: "maintenance", label: "Maintenance / Repairs" },
+  { value: "stationery", label: "Stationery" },
+  { value: "advance", label: "Advance" },
+  { value: "reimbursement", label: "Reimbursement" },
+  { value: "other", label: "Other" },
+] as const
+
+export type PettyCashCategory = (typeof PETTY_CASH_CATEGORIES)[number]["value"]
+
+export function isValidPettyCashType(type: string): type is PettyCashType {
+  return (PETTY_CASH_TYPES as readonly string[]).includes(type)
+}
+
+export function isValidPettyCashCategory(category: string): category is PettyCashCategory {
+  return PETTY_CASH_CATEGORIES.some((c) => c.value === category)
 }
 
 // Insurance Constants

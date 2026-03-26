@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Location01Icon } from "@hugeicons/core-free-icons"
 import { Skeleton } from "@/components/ui/skeleton"
+import { PROPERTY_TYPES } from "@/lib/constants"
 
 export function FeaturedProjects() {
   const projects = useQuery(api.publicSite.listActiveProjects)
@@ -62,9 +63,16 @@ export function FeaturedProjects() {
                           </span>
                         </div>
                       )}
-                      <Badge className="absolute left-3 top-3 bg-primary text-white">
-                        {project.priceRange}
-                      </Badge>
+                      <div className="absolute left-3 top-3 flex gap-1.5">
+                        <Badge className="bg-primary text-white">
+                          {project.priceRange}
+                        </Badge>
+                        {project.propertyType && (
+                          <Badge variant="outline" className="bg-white/90">
+                            {PROPERTY_TYPES.find((t) => t.value === project.propertyType)?.label ?? project.propertyType}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                     <CardContent className="p-5">
                       <h3 className="text-lg font-semibold group-hover:text-primary">

@@ -29,13 +29,13 @@ export function WhatsAppSessionsOverview() {
       <div>
         <h3 className="text-sm font-medium">WhatsApp Sessions</h3>
         <p className="text-xs text-muted-foreground">
-          All salesperson WhatsApp connections across the CRM
+          All WhatsApp connections across the CRM
         </p>
       </div>
 
       {sessions?.length === 0 && (
         <p className="text-sm text-muted-foreground py-4">
-          No WhatsApp sessions connected yet. Salespeople can connect from their
+          No WhatsApp sessions connected yet. Team members can connect from their
           dashboard.
         </p>
       )}

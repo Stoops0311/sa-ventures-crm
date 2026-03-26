@@ -21,6 +21,7 @@ import {
   Clock01Icon,
   UserCheck01Icon,
   Calendar03Icon,
+  Coffee01Icon,
 } from "@hugeicons/core-free-icons"
 import { AttendanceDayDetail } from "@/components/shared/attendance-day-detail"
 
@@ -39,6 +40,28 @@ export function AttendancePersonalCalendar() {
   const isLoading = data === undefined
 
   const todayStr = getDateString(now)
+
+  // Break data
+  const monthPrefix = `${year}-${String(month).padStart(2, "0")}`
+  const myUserId = data?.userId
+  const breakData = useQuery(
+    api.breakTime.getBreaksForDateRange,
+    myUserId
+      ? { userIds: [myUserId], startDate: `${monthPrefix}-01`, endDate: `${monthPrefix}-31` }
+      : "skip"
+  )
+  const breakSettings = useQuery(api.breakTime.getSettings)
+  const warningThreshold = breakSettings?.warningThresholdMinutes ?? 90
+
+  function getDayBreakStats(date: string) {
+    if (!breakData) return { count: 0, totalMs: 0 }
+    const dayBreaks = breakData.filter((b) => b.date === date)
+    const totalMs = dayBreaks.reduce((sum, b) => {
+      const end = b.endTime ?? Date.now()
+      return sum + (end - b.startTime)
+    }, 0)
+    return { count: dayBreaks.length, totalMs }
+  }
 
   // Day detail sheet state
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
@@ -229,23 +252,43 @@ export function AttendancePersonalCalendar() {
                                   {day.totalHours.toFixed(1)}h
                                 </span>
                               )}
+                              {!weekend && !isFuture && (() => {
+                                const bs = getDayBreakStats(day.date)
+                                const bm = bs.totalMs / (1000 * 60)
+                                return bs.count > 0 && bm > warningThreshold ? (
+                                  <HugeiconsIcon icon={Coffee01Icon} className="absolute top-1 right-1 size-2.5 text-amber-500" strokeWidth={2} />
+                                ) : null
+                              })()}
                             </button>
                           </TooltipTrigger>
                           <TooltipContent side="top" className="text-[10px]">
-                            {weekend ? (
-                              "Weekend"
-                            ) : isFuture ? (
-                              "Upcoming"
-                            ) : day.status === "absent" ? (
-                              "Absent"
-                            ) : (
-                              <span className="tabular-nums">
-                                {day.totalHours.toFixed(1)}h
-                                {" \u00B7 "}
-                                {day.sessionCount} session
-                                {day.sessionCount !== 1 ? "s" : ""}
-                              </span>
-                            )}
+                            {(() => {
+                              if (weekend) return "Weekend"
+                              if (isFuture) return "Upcoming"
+                              if (day.status === "absent") return "Absent"
+                              const breakStats = getDayBreakStats(day.date)
+                              const breakMinutes = breakStats.totalMs / (1000 * 60)
+                              return (
+                                <div className="flex flex-col gap-0.5">
+                                  <span className="tabular-nums">
+                                    {day.totalHours.toFixed(1)}h
+                                    {" \u00B7 "}
+                                    {day.sessionCount} session
+                                    {day.sessionCount !== 1 ? "s" : ""}
+                                  </span>
+                                  {breakStats.count > 0 && (
+                                    <span className={cn(
+                                      "tabular-nums",
+                                      breakMinutes > warningThreshold ? "text-amber-500" : "text-muted-foreground"
+                                    )}>
+                                      {breakStats.count} break{breakStats.count !== 1 ? "s" : ""}
+                                      {" \u00B7 "}
+                                      {Math.round(breakMinutes)}m
+                                    </span>
+                                  )}
+                                </div>
+                              )
+                            })()}
                           </TooltipContent>
                         </Tooltip>
                       )

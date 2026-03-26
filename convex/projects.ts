@@ -41,18 +41,56 @@ export const getById = query({
   },
 })
 
+const projectOptionalFields = {
+  description: v.optional(v.string()),
+  amenities: v.optional(v.array(v.string())),
+  configurations: v.optional(v.string()),
+  possessionDate: v.optional(v.string()),
+  developerName: v.optional(v.string()),
+  reraNumber: v.optional(v.string()),
+  mapEmbedUrl: v.optional(v.string()),
+  // Property classification
+  propertyType: v.optional(v.string()),
+  constructionStatus: v.optional(v.string()),
+  transactionType: v.optional(v.string()),
+  ownershipType: v.optional(v.string()),
+  // Building details
+  totalFloors: v.optional(v.number()),
+  totalTowers: v.optional(v.number()),
+  totalUnits: v.optional(v.number()),
+  launchDate: v.optional(v.string()),
+  completionDate: v.optional(v.string()),
+  // Pricing details
+  pricePerSqft: v.optional(v.string()),
+  maintenanceCharges: v.optional(v.string()),
+  bookingAmount: v.optional(v.string()),
+  // Specifications
+  flooring: v.optional(v.string()),
+  waterSupply: v.optional(v.string()),
+  powerBackup: v.optional(v.string()),
+  overlooking: v.optional(v.array(v.string())),
+  gatedCommunity: v.optional(v.boolean()),
+  petFriendly: v.optional(v.boolean()),
+  furnishingStatus: v.optional(v.string()),
+  parkingInfo: v.optional(v.string()),
+  // Location details
+  city: v.optional(v.string()),
+  locality: v.optional(v.string()),
+  pincode: v.optional(v.string()),
+  latitude: v.optional(v.number()),
+  longitude: v.optional(v.number()),
+  // Nearby landmarks
+  nearbyLandmarks: v.optional(v.string()),
+  // DSM commission
+  dsmCommissionAmount: v.optional(v.number()),
+}
+
 export const create = mutation({
   args: {
     name: v.string(),
-    description: v.optional(v.string()),
     location: v.string(),
     priceRange: v.string(),
-    amenities: v.optional(v.array(v.string())),
-    configurations: v.optional(v.string()),
-    possessionDate: v.optional(v.string()),
-    developerName: v.optional(v.string()),
-    reraNumber: v.optional(v.string()),
-    mapEmbedUrl: v.optional(v.string()),
+    ...projectOptionalFields,
   },
   handler: async (ctx, args) => {
     const user = await requireUserWithRole(ctx, "admin")
@@ -67,20 +105,15 @@ export const create = mutation({
       slug = `${slug}-${Date.now()}`
     }
 
+    const { name, location, priceRange, ...optionalFields } = args
     const projectId = await ctx.db.insert("projects", {
-      name: args.name,
-      description: args.description,
-      location: args.location,
-      priceRange: args.priceRange,
+      name,
+      location,
+      priceRange,
       slug,
-      amenities: args.amenities,
-      configurations: args.configurations,
-      possessionDate: args.possessionDate,
-      developerName: args.developerName,
-      reraNumber: args.reraNumber,
-      mapEmbedUrl: args.mapEmbedUrl,
       status: "active",
       createdAt: Date.now(),
+      ...optionalFields,
     })
 
     await logActivity(ctx, {
@@ -99,15 +132,9 @@ export const update = mutation({
   args: {
     projectId: v.id("projects"),
     name: v.optional(v.string()),
-    description: v.optional(v.string()),
     location: v.optional(v.string()),
     priceRange: v.optional(v.string()),
-    amenities: v.optional(v.array(v.string())),
-    configurations: v.optional(v.string()),
-    possessionDate: v.optional(v.string()),
-    developerName: v.optional(v.string()),
-    reraNumber: v.optional(v.string()),
-    mapEmbedUrl: v.optional(v.string()),
+    ...projectOptionalFields,
   },
   handler: async (ctx, args) => {
     const user = await requireUserWithRole(ctx, "admin")
@@ -117,9 +144,10 @@ export const update = mutation({
     if (!existing) throw new Error("Project not found")
 
     const patch: Record<string, unknown> = {}
+
+    // Handle slug update when name changes
     if (updates.name !== undefined) {
       patch.name = updates.name
-      // Update slug when name changes
       let slug = slugify(updates.name)
       const existingSlug = await ctx.db
         .query("projects")
@@ -130,15 +158,14 @@ export const update = mutation({
       }
       patch.slug = slug
     }
-    if (updates.description !== undefined) patch.description = updates.description
-    if (updates.location !== undefined) patch.location = updates.location
-    if (updates.priceRange !== undefined) patch.priceRange = updates.priceRange
-    if (updates.amenities !== undefined) patch.amenities = updates.amenities
-    if (updates.configurations !== undefined) patch.configurations = updates.configurations
-    if (updates.possessionDate !== undefined) patch.possessionDate = updates.possessionDate
-    if (updates.developerName !== undefined) patch.developerName = updates.developerName
-    if (updates.reraNumber !== undefined) patch.reraNumber = updates.reraNumber
-    if (updates.mapEmbedUrl !== undefined) patch.mapEmbedUrl = updates.mapEmbedUrl
+
+    // Copy all other defined fields into patch
+    const { name: _name, ...rest } = updates
+    for (const [key, value] of Object.entries(rest)) {
+      if (value !== undefined) {
+        patch[key] = value
+      }
+    }
 
     await ctx.db.patch(projectId, patch)
 

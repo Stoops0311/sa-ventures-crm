@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { Calendar } from "@/components/ui/calendar"
+import { DateTimePicker } from "@/components/shared/date-time-picker"
 import {
   Popover,
   PopoverContent,
@@ -36,7 +36,12 @@ import {
   Calendar03Icon,
   WhatsappIcon,
   SmartPhone01Icon,
+  Attachment01Icon,
+  Cancel01Icon,
+  Pdf01Icon,
+  Image01Icon,
 } from "@hugeicons/core-free-icons"
+import { format } from "date-fns"
 import { toast } from "sonner"
 
 interface SendMessageDialogProps {
@@ -47,6 +52,8 @@ interface SendMessageDialogProps {
   leadPhone: string
   projectName?: string
   assignedTo: string
+  initialAttachmentLeadPhotoId?: string
+  initialAttachmentCreativeId?: string
 }
 
 export function SendMessageDialog({
@@ -57,6 +64,8 @@ export function SendMessageDialog({
   leadPhone,
   projectName,
   assignedTo,
+  initialAttachmentLeadPhotoId,
+  initialAttachmentCreativeId,
 }: SendMessageDialogProps) {
   const typedLeadId = leadId as Id<"leads">
   const typedAssignedTo = assignedTo as Id<"users">
@@ -66,6 +75,16 @@ export function SendMessageDialog({
   const smsDevice = useQuery(api.whatsappSessions.getSmsDevice)
   const createMessage = useMutation(api.messaging.create)
 
+  // Fetch lead to get projectId
+  const lead = useQuery(api.leads.getById, { leadId: typedLeadId })
+
+  // Attachment data
+  const projectCreatives = useQuery(
+    api.projectCreatives.listByProject,
+    lead?.projectId ? { projectId: lead.projectId } : "skip"
+  )
+  const leadPhotos = useQuery(api.leadPhotos.listByLead, { leadId: typedLeadId })
+
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("")
   const [language, setLanguage] = useState<"en" | "hi">("en")
   const [message, setMessage] = useState("")
@@ -73,6 +92,16 @@ export function SendMessageDialog({
   const [scheduleDate, setScheduleDate] = useState<Date | undefined>()
   const [scheduleCalendarOpen, setScheduleCalendarOpen] = useState(false)
   const [sending, setSending] = useState(false)
+  const [showAttachments, setShowAttachments] = useState(!!initialAttachmentLeadPhotoId || !!initialAttachmentCreativeId)
+
+  // Attachment selection: { type: "creative" | "photo", id: string }
+  const [attachment, setAttachment] = useState<{ type: "creative" | "photo"; id: string; name: string } | null>(
+    initialAttachmentLeadPhotoId
+      ? { type: "photo", id: initialAttachmentLeadPhotoId, name: "" }
+      : initialAttachmentCreativeId
+      ? { type: "creative", id: initialAttachmentCreativeId, name: "" }
+      : null
+  )
 
   // Resolve template when selection or language changes
   useEffect(() => {
@@ -121,6 +150,14 @@ export function SendMessageDialog({
         scheduledAt,
         channels: "both",
         triggerType: "manual",
+        attachedCreativeId:
+          attachment?.type === "creative"
+            ? (attachment.id as Id<"projectCreatives">)
+            : undefined,
+        attachedLeadPhotoId:
+          attachment?.type === "photo"
+            ? (attachment.id as Id<"leadPhotos">)
+            : undefined,
       })
 
       toast(mode === "schedule" ? "Message scheduled" : "Message sent")
@@ -130,6 +167,8 @@ export function SendMessageDialog({
       setMessage("")
       setMode("now")
       setScheduleDate(undefined)
+      setAttachment(null)
+      setShowAttachments(false)
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Failed to send message"
@@ -245,6 +284,105 @@ export function SendMessageDialog({
             />
           </div>
 
+          {/* Attach File */}
+          <div className="space-y-2">
+            <button
+              type="button"
+              onClick={() => setShowAttachments(!showAttachments)}
+              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <HugeiconsIcon icon={Attachment01Icon} strokeWidth={2} className="size-3.5" />
+              {attachment ? "Change attachment" : "Attach project file or photo"}
+            </button>
+
+            {attachment && (
+              <div className="flex items-center gap-2 p-2 border bg-muted/30 text-xs">
+                <HugeiconsIcon
+                  icon={attachment.name.toLowerCase().endsWith(".pdf") ? Pdf01Icon : Image01Icon}
+                  strokeWidth={1.5}
+                  className="size-4 text-muted-foreground shrink-0"
+                />
+                <span className="truncate flex-1">{attachment.name || "Selected file"}</span>
+                <Badge variant="secondary" className="text-[9px] shrink-0">WhatsApp only</Badge>
+                <button
+                  onClick={() => setAttachment(null)}
+                  className="text-muted-foreground hover:text-foreground shrink-0"
+                >
+                  <HugeiconsIcon icon={Cancel01Icon} strokeWidth={2} className="size-3" />
+                </button>
+              </div>
+            )}
+
+            {showAttachments && (
+              <div className="border p-2 space-y-2 max-h-40 overflow-y-auto">
+                {/* Project Files */}
+                {projectCreatives && projectCreatives.length > 0 && (
+                  <div>
+                    <p className="text-[10px] font-medium text-muted-foreground mb-1 uppercase tracking-wider">
+                      Project Files
+                    </p>
+                    <div className="space-y-0.5">
+                      {(projectCreatives as Array<{ _id: string; fileName: string; fileType: string; url: string | null }>).map((c) => (
+                        <button
+                          key={c._id}
+                          onClick={() => {
+                            setAttachment({ type: "creative", id: c._id, name: c.fileName })
+                            setShowAttachments(false)
+                          }}
+                          className={`w-full flex items-center gap-2 px-2 py-1 text-xs text-left hover:bg-muted transition-colors ${
+                            attachment?.id === c._id ? "bg-muted font-medium" : ""
+                          }`}
+                        >
+                          <HugeiconsIcon
+                            icon={c.fileType.startsWith("image/") ? Image01Icon : Pdf01Icon}
+                            strokeWidth={1.5}
+                            className="size-3.5 text-muted-foreground shrink-0"
+                          />
+                          <span className="truncate">{c.fileName}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Visit Photos */}
+                {leadPhotos && (leadPhotos as Array<{ _id: string; fileName: string; fileType: string; url: string | null }>).length > 0 && (
+                  <div>
+                    <p className="text-[10px] font-medium text-muted-foreground mb-1 uppercase tracking-wider">
+                      Visit Photos
+                    </p>
+                    <div className="space-y-0.5">
+                      {(leadPhotos as Array<{ _id: string; fileName: string; fileType: string; url: string | null }>).map((p) => (
+                        <button
+                          key={p._id}
+                          onClick={() => {
+                            setAttachment({ type: "photo", id: p._id, name: p.fileName })
+                            setShowAttachments(false)
+                          }}
+                          className={`w-full flex items-center gap-2 px-2 py-1 text-xs text-left hover:bg-muted transition-colors ${
+                            attachment?.id === p._id ? "bg-muted font-medium" : ""
+                          }`}
+                        >
+                          <HugeiconsIcon
+                            icon={p.fileType.startsWith("image/") ? Image01Icon : Pdf01Icon}
+                            strokeWidth={1.5}
+                            className="size-3.5 text-muted-foreground shrink-0"
+                          />
+                          <span className="truncate">{p.fileName}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {(!projectCreatives || projectCreatives.length === 0) &&
+                 (!leadPhotos || (leadPhotos as Array<unknown>).length === 0) && (
+                  <p className="text-[10px] text-muted-foreground">No files available</p>
+                )}
+              </div>
+            )}
+          </div>
+
           {/* Send mode */}
           <div className="flex items-center gap-2">
             <div className="flex gap-1">
@@ -279,19 +417,14 @@ export function SendMessageDialog({
                   <Button variant="outline" size="sm">
                     <HugeiconsIcon icon={Calendar03Icon} strokeWidth={2} />
                     {scheduleDate
-                      ? scheduleDate.toLocaleDateString()
-                      : "Pick date"}
+                      ? format(scheduleDate, "MMM d, h:mm a")
+                      : "Pick date & time"}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={scheduleDate}
-                    onSelect={(date) => {
-                      setScheduleDate(date)
-                      setScheduleCalendarOpen(false)
-                    }}
-                    disabled={(date) => date < new Date()}
+                  <DateTimePicker
+                    value={scheduleDate}
+                    onChange={(date) => setScheduleDate(date)}
                   />
                 </PopoverContent>
               </Popover>
@@ -300,7 +433,7 @@ export function SendMessageDialog({
 
           <div className="flex items-center gap-1.5">
             <Badge variant="secondary" className="text-[10px]">
-              WhatsApp + SMS
+              {attachment ? "WhatsApp only (SMS skipped — media)" : "WhatsApp + SMS"}
             </Badge>
           </div>
         </div>

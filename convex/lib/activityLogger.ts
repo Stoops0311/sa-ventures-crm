@@ -8,7 +8,7 @@ import type { Id } from "../_generated/dataModel"
 export async function logActivity(
   ctx: MutationCtx,
   params: {
-    entityType: "lead" | "project" | "user" | "employee" | "onboarding" | "letter" | "template" | "payroll" | "salary" | "insurance" | "hr_query" | "suggestion" | "vehicle" | "trip" | "article"
+    entityType: "lead" | "project" | "user" | "employee" | "onboarding" | "letter" | "template" | "payroll" | "salary" | "insurance" | "hr_query" | "suggestion" | "vehicle" | "trip" | "article" | "after_sales" | "visit" | "petty_cash" | "break_session" | "dsm_commission"
     entityId: string
     action: string
     details?: Record<string, unknown>

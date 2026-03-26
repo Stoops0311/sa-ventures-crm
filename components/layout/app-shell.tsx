@@ -7,6 +7,8 @@ import { AppSidebar } from "@/components/layout/app-sidebar"
 import { TopBar } from "@/components/layout/top-bar"
 import { GlobalSearch } from "@/components/layout/global-search"
 import { usePresence } from "@/hooks/use-presence"
+import { useBreakTime } from "@/hooks/use-break-time"
+import { BreakOverlay } from "@/components/break-time/break-overlay"
 import type { UserRole } from "@/lib/constants"
 
 interface AppShellProps {
@@ -15,7 +17,8 @@ interface AppShellProps {
 }
 
 export function AppShell({ children, role }: AppShellProps) {
-  usePresence()
+  const { isOnBreak } = useBreakTime()
+  usePresence({ paused: isOnBreak })
 
   return (
     <TooltipProvider>
@@ -28,6 +31,7 @@ export function AppShell({ children, role }: AppShellProps) {
       </SidebarProvider>
       <Toaster />
       <GlobalSearch />
+      <BreakOverlay />
     </TooltipProvider>
   )
 }

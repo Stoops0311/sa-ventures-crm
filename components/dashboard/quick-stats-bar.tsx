@@ -13,6 +13,7 @@ export function QuickStatsBar() {
         { label: "New (Uncontacted)", value: stats.newUncontacted },
         { label: "Visits This Week", value: stats.visitsThisWeek },
         { label: "Conversions (Month)", value: stats.conversionsThisMonth },
+        { label: "After Sales Active", value: stats.afterSalesActive },
       ]
     : null
 

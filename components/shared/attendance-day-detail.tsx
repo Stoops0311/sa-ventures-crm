@@ -46,6 +46,23 @@ export function AttendanceDayDetail({
     date ? { userId, date } : "skip"
   )
 
+  // Fetch break sessions for this day
+  const targetUserId = detail?.user.id ?? userId
+  const breaks = useQuery(
+    api.breakTime.getBreaksForDay,
+    targetUserId && date ? { userId: targetUserId, date } : "skip"
+  )
+  const breakSettings = useQuery(api.breakTime.getSettings)
+  const warningThreshold = breakSettings?.warningThresholdMinutes ?? 90
+
+  // Calculate total intentional break time
+  const intentionalBreakMs = (breaks ?? []).reduce((sum, b) => {
+    const end = b.endTime ?? Date.now()
+    return sum + (end - b.startTime)
+  }, 0)
+  const intentionalBreakMinutes = intentionalBreakMs / (1000 * 60)
+  const isExcessiveBreak = (breaks ?? []).length > 0 && intentionalBreakMinutes > warningThreshold
+
   const isLoading = date !== null && detail === undefined
 
   return (
@@ -95,7 +112,8 @@ export function AttendanceDayDetail({
                 <StatCard
                   icon={Coffee01Icon}
                   label="Break Time"
-                  value={formatDuration(detail.breakMs)}
+                  value={intentionalBreakMs > 0 ? formatDuration(intentionalBreakMs) : formatDuration(detail.breakMs)}
+                  warning={isExcessiveBreak}
                 />
                 <StatCard
                   icon={RepeatIcon}
@@ -163,6 +181,58 @@ export function AttendanceDayDetail({
                 </div>
               </div>
 
+              {/* Breaks Section */}
+              {breaks && breaks.length > 0 && (
+                <>
+                  <Separator />
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <h3 className="font-sans text-xs font-medium">
+                        Breaks
+                      </h3>
+                      {isExcessiveBreak && (
+                        <Badge variant="outline" className="text-[8px] px-1.5 py-0 h-4 bg-amber-50 text-amber-600 border-amber-200">
+                          Exceeds {warningThreshold}m threshold
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="space-y-1.5">
+                      {breaks.map((b, i) => {
+                        const end = b.endTime ?? Date.now()
+                        const durationMs = end - b.startTime
+                        return (
+                          <div
+                            key={i}
+                            className="flex items-center gap-3 p-2 bg-amber-50/50 border border-amber-100"
+                          >
+                            <HugeiconsIcon icon={Coffee01Icon} className="size-3.5 text-amber-500 shrink-0" strokeWidth={2} />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 text-[10px]">
+                                <span className="tabular-nums text-muted-foreground">
+                                  {formatTimeOfDay(b.startTime)}
+                                </span>
+                                <span className="text-muted-foreground/50">&rarr;</span>
+                                <span className="tabular-nums text-muted-foreground">
+                                  {b.endTime ? formatTimeOfDay(b.endTime) : "Active"}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[10px] font-medium tabular-nums">
+                                {formatDuration(durationMs)}
+                              </span>
+                              {b.wasAutoEnded && (
+                                <span className="text-[8px] text-muted-foreground">(auto-ended)</span>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </>
+              )}
+
               <Separator />
 
               {/* Activity Summary */}
@@ -212,21 +282,26 @@ function StatCard({
   label,
   value,
   accent,
+  warning,
 }: {
   icon: Parameters<typeof HugeiconsIcon>[0]["icon"]
   label: string
   value: string
   accent?: boolean
+  warning?: boolean
 }) {
   return (
-    <Card className={cn(accent && "border-primary/20 bg-primary/5")}>
+    <Card className={cn(
+      accent && "border-primary/20 bg-primary/5",
+      warning && "border-amber-200 bg-amber-50/50"
+    )}>
       <CardContent className="p-3">
         <div className="flex items-center gap-1.5 mb-1">
           <HugeiconsIcon
             icon={icon}
             className={cn(
               "size-3.5",
-              accent ? "text-primary" : "text-muted-foreground"
+              accent ? "text-primary" : warning ? "text-amber-500" : "text-muted-foreground"
             )}
             strokeWidth={2}
           />
@@ -237,7 +312,8 @@ function StatCard({
         <p
           className={cn(
             "text-sm font-sans font-semibold tabular-nums",
-            accent && "text-primary"
+            accent && "text-primary",
+            warning && "text-amber-600"
           )}
         >
           {value}

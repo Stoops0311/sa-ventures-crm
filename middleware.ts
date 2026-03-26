@@ -24,6 +24,7 @@ const isDSMRoute = createRouteMatcher(["/dsm(.*)"])
 const isDashboardRoute = createRouteMatcher(["/dashboard(.*)"])
 const isHRRoute = createRouteMatcher(["/hr(.*)"])
 const isVehicleRoute = createRouteMatcher(["/vehicle(.*)"])
+const isReceptionistRoute = createRouteMatcher(["/receptionist(.*)"])
 
 const roleHomeRoutes: Record<string, string> = {
   admin: "/admin",
@@ -31,6 +32,7 @@ const roleHomeRoutes: Record<string, string> = {
   dsm: "/dsm",
   hr: "/hr",
   vehicle: "/vehicle",
+  receptionist: "/receptionist",
 }
 
 export default clerkMiddleware(async (auth, req) => {
@@ -69,6 +71,10 @@ export default clerkMiddleware(async (auth, req) => {
   }
 
   if (isVehicleRoute(req) && role !== "vehicle" && role !== "admin") {
+    return NextResponse.redirect(new URL(homeRoute, req.url))
+  }
+
+  if (isReceptionistRoute(req) && role !== "receptionist" && role !== "admin") {
     return NextResponse.redirect(new URL(homeRoute, req.url))
   }
 })

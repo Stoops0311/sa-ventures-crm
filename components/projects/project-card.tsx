@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Building06Icon, Location01Icon } from "@hugeicons/core-free-icons"
-import { cn } from "@/lib/utils"
+import { PROPERTY_TYPES, getConstructionStatusStyle } from "@/lib/constants"
 
 interface ProjectCardProps {
   project: {
@@ -15,6 +15,8 @@ interface ProjectCardProps {
     location: string
     priceRange: string
     status: string
+    propertyType?: string
+    constructionStatus?: string
   }
   leadCount: number
 }
@@ -41,12 +43,11 @@ export function ProjectCard({ project, leadCount }: ProjectCardProps) {
           </div>
           <Badge
             variant="outline"
-            className={cn(
-              "shrink-0",
+            className={`shrink-0 ${
               project.status === "active"
                 ? "bg-green-50 text-green-700 border-green-200"
                 : "bg-gray-100 text-gray-600 border-gray-200"
-            )}
+            }`}
           >
             {project.status === "active" ? "Active" : "Archived"}
           </Badge>
@@ -57,7 +58,22 @@ export function ProjectCard({ project, leadCount }: ProjectCardProps) {
           <span>{project.location}</span>
         </div>
 
-        <p className="text-sm">{project.priceRange}</p>
+        <div className="flex items-center gap-2">
+          <p className="text-sm">{project.priceRange}</p>
+          {project.propertyType && (
+            <Badge variant="outline" className="text-xs">
+              {PROPERTY_TYPES.find((t) => t.value === project.propertyType)?.label ?? project.propertyType}
+            </Badge>
+          )}
+          {project.constructionStatus && (() => {
+            const style = getConstructionStatusStyle(project.constructionStatus!)
+            return (
+              <Badge className={`text-xs ${style.bg} ${style.text} ${style.border}`}>
+                {style.label}
+              </Badge>
+            )
+          })()}
+        </div>
 
         <p className="text-xs text-muted-foreground">
           {leadCount} lead{leadCount !== 1 ? "s" : ""}

@@ -4,10 +4,17 @@ import { useEffect } from "react"
 import { useMutation } from "convex/react"
 import { api } from "@/convex/_generated/api"
 
-export function usePresence() {
+interface UsePresenceOptions {
+  paused?: boolean
+}
+
+export function usePresence(options?: UsePresenceOptions) {
   const heartbeat = useMutation(api.presence.heartbeat)
+  const paused = options?.paused ?? false
 
   useEffect(() => {
+    if (paused) return
+
     // Send initial heartbeat
     heartbeat()
 
@@ -15,5 +22,5 @@ export function usePresence() {
     const interval = setInterval(() => heartbeat(), 30_000)
 
     return () => clearInterval(interval)
-  }, [heartbeat])
+  }, [heartbeat, paused])
 }

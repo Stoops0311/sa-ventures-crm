@@ -29,6 +29,7 @@ export type LeadFilters = {
   projectId?: Id<"projects">
   statuses?: string[]
   assignedTo?: Id<"users">
+  overdue?: boolean
 }
 
 export function LeadFiltersBar({

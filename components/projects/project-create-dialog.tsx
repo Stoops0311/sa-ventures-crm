@@ -15,6 +15,14 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { PROPERTY_TYPES } from "@/lib/constants"
 
 interface ProjectCreateDialogProps {
   open: boolean
@@ -26,6 +34,8 @@ export function ProjectCreateDialog({ open, onOpenChange }: ProjectCreateDialogP
   const [description, setDescription] = useState("")
   const [location, setLocation] = useState("")
   const [priceRange, setPriceRange] = useState("")
+  const [propertyType, setPropertyType] = useState("")
+  const [dsmCommission, setDsmCommission] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const createProject = useMutation(api.projects.create)
@@ -43,6 +53,8 @@ export function ProjectCreateDialog({ open, onOpenChange }: ProjectCreateDialogP
         description: description.trim() || undefined,
         location: location.trim(),
         priceRange: priceRange.trim(),
+        propertyType: propertyType || undefined,
+        dsmCommissionAmount: dsmCommission ? Number(dsmCommission) : undefined,
       })
       toast.success("Project created successfully")
       onOpenChange(false)
@@ -50,6 +62,8 @@ export function ProjectCreateDialog({ open, onOpenChange }: ProjectCreateDialogP
       setDescription("")
       setLocation("")
       setPriceRange("")
+      setPropertyType("")
+      setDsmCommission("")
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create project")
     } finally {
@@ -72,6 +86,22 @@ export function ProjectCreateDialog({ open, onOpenChange }: ProjectCreateDialogP
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Green Valley Residences"
             />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="project-type">Property Type</Label>
+            <Select value={propertyType} onValueChange={setPropertyType}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select type" />
+              </SelectTrigger>
+              <SelectContent>
+                {PROPERTY_TYPES.map((t) => (
+                  <SelectItem key={t.value} value={t.value}>
+                    {t.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-1.5">
@@ -101,6 +131,18 @@ export function ProjectCreateDialog({ open, onOpenChange }: ProjectCreateDialogP
               value={priceRange}
               onChange={(e) => setPriceRange(e.target.value)}
               placeholder="e.g. 45L - 1.2Cr"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="project-dsm-commission">DSM Commission (INR)</Label>
+            <Input
+              id="project-dsm-commission"
+              type="number"
+              value={dsmCommission}
+              onChange={(e) => setDsmCommission(e.target.value)}
+              placeholder="e.g. 15000"
+              min={0}
             />
           </div>
 

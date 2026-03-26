@@ -15,6 +15,7 @@ import { SendMessageDialog } from "@/components/leads/send-message-dialog"
 import { AutoSuggestBanner } from "@/components/leads/auto-suggest-banner"
 import { MessageHistory } from "@/components/leads/message-history"
 import { PhoneValidationBanner } from "@/components/leads/phone-validation-banner"
+import { AfterSalesBanner } from "@/components/after-sales/after-sales-banner"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -22,7 +23,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { Calendar } from "@/components/ui/calendar"
+import { DateTimePicker } from "@/components/shared/date-time-picker"
 import { LEAD_SOURCES } from "@/lib/constants"
 import { HugeiconsIcon } from "@hugeicons/react"
 import {
@@ -33,6 +34,9 @@ import {
   WhatsappIcon,
   Call02Icon,
   Mail01Icon,
+  CameraAdd01Icon,
+  Delete01Icon,
+  Pdf01Icon,
 } from "@hugeicons/core-free-icons"
 import { toast } from "sonner"
 
@@ -47,9 +51,18 @@ export function LeadDetailContent({ leadId }: { leadId: string }) {
 
   const [whatsappDialogOpen, setWhatsappDialogOpen] = useState(false)
   const [followUpCalendarOpen, setFollowUpCalendarOpen] = useState(false)
+  const [photoSendDialogOpen, setPhotoSendDialogOpen] = useState(false)
+  const [sendPhotoId, setSendPhotoId] = useState<string | null>(null)
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false)
 
   const remarkSectionRef = useRef<HTMLDivElement>(null)
   const addFollowUp = useMutation(api.leads.addFollowUp)
+
+  // Visit photos
+  const photos = useQuery(api.leadPhotos.listByLead, { leadId: typedLeadId })
+  const generateUploadUrl = useMutation(api.leadPhotos.generateUploadUrl)
+  const savePhoto = useMutation(api.leadPhotos.save)
+  const removePhoto = useMutation(api.leadPhotos.remove)
 
   if (lead === undefined) {
     return <LeadDetailSkeleton />
@@ -96,6 +109,43 @@ export function LeadDetailContent({ leadId }: { leadId: string }) {
     user?.role === "admin" ||
     (user?.role === "salesperson" &&
       lead.assignedTo?.toString() === user?._id?.toString())
+
+  const handleUploadPhotos = async (files: FileList) => {
+    if (!files.length) return
+    setIsUploadingPhoto(true)
+    try {
+      for (const file of Array.from(files)) {
+        const uploadUrl = await generateUploadUrl()
+        const result = await fetch(uploadUrl, {
+          method: "PUT",
+          headers: { "Content-Type": file.type },
+          body: file,
+        })
+        if (!result.ok) throw new Error("Upload failed")
+        const { storageId } = await result.json() as { storageId: string }
+        await savePhoto({
+          leadId: typedLeadId,
+          storageId: storageId as Id<"_storage">,
+          fileName: file.name,
+          fileType: file.type,
+        })
+      }
+      toast(`${files.length === 1 ? "Photo" : `${files.length} photos`} uploaded`)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Upload failed")
+    } finally {
+      setIsUploadingPhoto(false)
+    }
+  }
+
+  const handleDeletePhoto = async (photoId: string) => {
+    try {
+      await removePhoto({ photoId: photoId as Id<"leadPhotos"> })
+      toast("Photo deleted")
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to delete photo")
+    }
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -202,15 +252,13 @@ export function LeadDetailContent({ leadId }: { leadId: string }) {
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={
+                <DateTimePicker
+                  value={
                     lead.followUpDate
                       ? new Date(lead.followUpDate)
                       : undefined
                   }
-                  onSelect={handleScheduleFollowUp}
-                  disabled={(date) => date < new Date()}
+                  onChange={handleScheduleFollowUp}
                 />
               </PopoverContent>
             </Popover>
@@ -234,6 +282,13 @@ export function LeadDetailContent({ leadId }: { leadId: string }) {
 
         {/* Auto-suggest banners */}
         {canEdit && <AutoSuggestBanner leadId={leadId} />}
+
+        {/* After-sales progress banner */}
+        <AfterSalesBanner
+          leadId={leadId}
+          leadStatus={lead.status}
+          canEdit={canEdit}
+        />
 
         {/* Lead Details */}
         <div className="px-4 py-4">
@@ -275,6 +330,108 @@ export function LeadDetailContent({ leadId }: { leadId: string }) {
             )}
           </dl>
         </div>
+
+        {/* Visit Photos */}
+        {(photos && photos.length > 0 || canEdit) && (
+          <div className="px-4 py-4 border-t">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-sans font-medium">Visit Photos</h3>
+              {canEdit && (
+                <label className="cursor-pointer">
+                  <input
+                    type="file"
+                    accept="image/*,application/pdf"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => e.target.files && handleUploadPhotos(e.target.files)}
+                    disabled={isUploadingPhoto}
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    asChild
+                    className="pointer-events-none"
+                    disabled={isUploadingPhoto}
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <HugeiconsIcon icon={CameraAdd01Icon} strokeWidth={2} className="size-3.5" />
+                      {isUploadingPhoto ? "Uploading..." : "Add Photo"}
+                    </span>
+                  </Button>
+                </label>
+              )}
+            </div>
+            {photos && photos.length > 0 ? (
+              <div className="grid grid-cols-3 gap-2">
+                {(photos as Array<{ _id: string; fileName: string; fileType: string; url: string | null; uploadedBy: string }>).map((photo) => (
+                  <div key={photo._id} className="relative group">
+                    {photo.fileType.startsWith("image/") ? (
+                      <a href={photo.url ?? "#"} target="_blank" rel="noopener noreferrer">
+                        <img
+                          src={photo.url ?? ""}
+                          alt={photo.fileName}
+                          className="w-full aspect-square object-cover border bg-muted"
+                        />
+                      </a>
+                    ) : (
+                      <a
+                        href={photo.url ?? "#"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex flex-col items-center justify-center aspect-square border bg-muted gap-1 hover:bg-muted/70 transition-colors p-2"
+                      >
+                        <HugeiconsIcon icon={Pdf01Icon} strokeWidth={1.5} className="size-6 text-muted-foreground" />
+                        <span className="text-[9px] text-muted-foreground text-center truncate w-full">
+                          {photo.fileName}
+                        </span>
+                      </a>
+                    )}
+                    <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => {
+                          setSendPhotoId(photo._id)
+                          setPhotoSendDialogOpen(true)
+                        }}
+                        className="bg-background/90 border p-0.5 hover:bg-muted transition-colors"
+                        title="Send via WhatsApp"
+                      >
+                        <HugeiconsIcon icon={WhatsappIcon} strokeWidth={2} className="size-3 text-green-600" />
+                      </button>
+                      {canEdit && (
+                        <button
+                          onClick={() => handleDeletePhoto(photo._id)}
+                          className="bg-background/90 border p-0.5 hover:bg-muted transition-colors"
+                          title="Delete photo"
+                        >
+                          <HugeiconsIcon icon={Delete01Icon} strokeWidth={2} className="size-3 text-destructive" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">No photos yet</p>
+            )}
+          </div>
+        )}
+
+        {/* Send dialog opened from a visit photo */}
+        {photoSendDialogOpen && (
+          <SendMessageDialog
+            leadId={leadId}
+            leadName={lead.name}
+            leadPhone={lead.mobileNumber}
+            projectName={project?.name}
+            assignedTo={lead.assignedTo?.toString() ?? ""}
+            open={photoSendDialogOpen}
+            onOpenChange={(open) => {
+              setPhotoSendDialogOpen(open)
+              if (!open) setSendPhotoId(null)
+            }}
+            initialAttachmentLeadPhotoId={sendPhotoId ?? undefined}
+          />
+        )}
 
         {/* Message History */}
         <MessageHistory leadId={leadId} />

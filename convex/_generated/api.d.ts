@@ -9,9 +9,12 @@
  */
 
 import type * as activityLogs from "../activityLogs.js";
+import type * as afterSales from "../afterSales.js";
 import type * as articles from "../articles.js";
 import type * as attendance from "../attendance.js";
+import type * as breakTime from "../breakTime.js";
 import type * as crons from "../crons.js";
+import type * as dsmCommissions from "../dsmCommissions.js";
 import type * as employeeLetters from "../employeeLetters.js";
 import type * as employeeProfiles from "../employeeProfiles.js";
 import type * as hrMigration from "../hrMigration.js";
@@ -19,6 +22,7 @@ import type * as hrQueries from "../hrQueries.js";
 import type * as http from "../http.js";
 import type * as import_ from "../import.js";
 import type * as insurance from "../insurance.js";
+import type * as leadPhotos from "../leadPhotos.js";
 import type * as leads from "../leads.js";
 import type * as letterTemplates from "../letterTemplates.js";
 import type * as lib_activityLogger from "../lib/activityLogger.js";
@@ -30,6 +34,7 @@ import type * as messageTemplates from "../messageTemplates.js";
 import type * as messaging from "../messaging.js";
 import type * as onboarding from "../onboarding.js";
 import type * as payroll from "../payroll.js";
+import type * as pettyCash from "../pettyCash.js";
 import type * as presence from "../presence.js";
 import type * as projectCreatives from "../projectCreatives.js";
 import type * as projects from "../projects.js";
@@ -42,6 +47,7 @@ import type * as trainingProgress from "../trainingProgress.js";
 import type * as trips from "../trips.js";
 import type * as users from "../users.js";
 import type * as vehicles from "../vehicles.js";
+import type * as visits from "../visits.js";
 import type * as websiteInquiries from "../websiteInquiries.js";
 import type * as whatsappSessions from "../whatsappSessions.js";
 
@@ -53,9 +59,12 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   activityLogs: typeof activityLogs;
+  afterSales: typeof afterSales;
   articles: typeof articles;
   attendance: typeof attendance;
+  breakTime: typeof breakTime;
   crons: typeof crons;
+  dsmCommissions: typeof dsmCommissions;
   employeeLetters: typeof employeeLetters;
   employeeProfiles: typeof employeeProfiles;
   hrMigration: typeof hrMigration;
@@ -63,6 +72,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   import: typeof import_;
   insurance: typeof insurance;
+  leadPhotos: typeof leadPhotos;
   leads: typeof leads;
   letterTemplates: typeof letterTemplates;
   "lib/activityLogger": typeof lib_activityLogger;
@@ -74,6 +84,7 @@ declare const fullApi: ApiFromModules<{
   messaging: typeof messaging;
   onboarding: typeof onboarding;
   payroll: typeof payroll;
+  pettyCash: typeof pettyCash;
   presence: typeof presence;
   projectCreatives: typeof projectCreatives;
   projects: typeof projects;
@@ -86,6 +97,7 @@ declare const fullApi: ApiFromModules<{
   trips: typeof trips;
   users: typeof users;
   vehicles: typeof vehicles;
+  visits: typeof visits;
   websiteInquiries: typeof websiteInquiries;
   whatsappSessions: typeof whatsappSessions;
 }>;

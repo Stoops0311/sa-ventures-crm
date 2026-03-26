@@ -13,6 +13,7 @@ import { useDebounce } from "@/hooks/use-debounce"
 import type { SortConfig } from "@/components/shared/data-table"
 import type { Id } from "@/convex/_generated/dataModel"
 import { AddLeadDialog } from "@/components/admin/add-lead-dialog"
+import { ACTIVE_LEAD_STATUSES } from "@/lib/constants"
 
 export default function AdminLeadsPage() {
   return (
@@ -28,7 +29,21 @@ function AdminLeadsContent() {
   // Initialize filters from URL params
   const [filters, setFilters] = useState<LeadFilters>(() => {
     const assignedTo = searchParams.get("assignedTo")
-    return assignedTo ? { assignedTo: assignedTo as Id<"users"> } : {}
+    const status = searchParams.get("status")
+    const statusGroup = searchParams.get("statusGroup")
+    const overdue = searchParams.get("overdue")
+
+    const statuses = status
+      ? [status]
+      : statusGroup === "active"
+      ? [...ACTIVE_LEAD_STATUSES]
+      : undefined
+
+    return {
+      assignedTo: assignedTo ? (assignedTo as Id<"users">) : undefined,
+      statuses,
+      overdue: overdue === "true" ? true : undefined,
+    }
   })
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -107,6 +122,14 @@ function AdminLeadsContent() {
     if (filters.statuses && filters.statuses.length > 1) {
       const statusSet = new Set(filters.statuses)
       filtered = filtered.filter((l) => statusSet.has(l.status))
+    }
+
+    // Apply overdue filter: Follow Up leads with past followUpDate
+    if (filters.overdue) {
+      const now = Date.now()
+      filtered = filtered.filter(
+        (l) => l.status === "Follow Up" && l.followUpDate != null && l.followUpDate < now
+      )
     }
 
     // Client-side sorting

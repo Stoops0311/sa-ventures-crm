@@ -1,6 +1,7 @@
 import {
   formatDistanceToNow,
   isToday as fnsIsToday,
+  isTomorrow as fnsIsTomorrow,
   isPast,
   format,
   startOfDay,
@@ -40,9 +41,12 @@ export function formatFollowUpDate(timestamp: number | undefined): string {
   if (!timestamp) return "--"
   const date = new Date(timestamp)
   if (fnsIsToday(date)) {
-    return `Today ${format(date, "h:mm a")}`
+    return `Today at ${format(date, "h:mm a")}`
   }
-  return format(date, "MMM d, yyyy")
+  if (fnsIsTomorrow(date)) {
+    return `Tomorrow at ${format(date, "h:mm a")}`
+  }
+  return format(date, "MMM d 'at' h:mm a")
 }
 
 export function formatFullDate(timestamp: number): string {

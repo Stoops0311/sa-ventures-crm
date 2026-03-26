@@ -146,6 +146,8 @@ export const create = mutation({
     scheduledAt: v.number(),
     channels: v.string(),
     triggerType: v.string(),
+    attachedCreativeId: v.optional(v.id("projectCreatives")),
+    attachedLeadPhotoId: v.optional(v.id("leadPhotos")),
   },
   handler: async (ctx, args) => {
     const user = await requireUserWithAnyRole(ctx, ["admin", "salesperson"])
@@ -159,6 +161,7 @@ export const create = mutation({
       }
     }
 
+    const hasAttachment = !!(args.attachedCreativeId || args.attachedLeadPhotoId)
     const now = Date.now()
     const messageId = await ctx.db.insert("scheduledMessages", {
       leadId: args.leadId,
@@ -168,8 +171,11 @@ export const create = mutation({
       scheduledAt: args.scheduledAt,
       channels: args.channels,
       whatsappStatus: "pending",
-      smsStatus: "pending",
+      smsStatus: hasAttachment ? "skipped" : "pending",
       triggerType: args.triggerType,
+      attachedCreativeId: args.attachedCreativeId,
+      attachedLeadPhotoId: args.attachedLeadPhotoId,
+      ...(hasAttachment ? { smsError: "Media attachments not supported on SMS" } : {}),
       createdBy: user._id,
       createdAt: now,
     })
@@ -178,7 +184,7 @@ export const create = mutation({
     if (args.scheduledAt > 0 && args.scheduledAt <= now) {
       await ctx.db.patch(messageId, {
         whatsappStatus: "sending",
-        smsStatus: "sending",
+        ...(hasAttachment ? {} : { smsStatus: "sending" }),
       })
       await ctx.scheduler.runAfter(0, internal.messaging.sendMessage, {
         messageId,
@@ -312,6 +318,29 @@ export const getSmsDeviceInternal = internalQuery({
   },
 })
 
+// Internal query to fetch attachment file info (storageId, fileName, fileType)
+export const getAttachmentInternal = internalQuery({
+  args: {
+    attachedCreativeId: v.optional(v.id("projectCreatives")),
+    attachedLeadPhotoId: v.optional(v.id("leadPhotos")),
+  },
+  handler: async (ctx, args) => {
+    if (args.attachedCreativeId) {
+      const creative = await ctx.db.get(args.attachedCreativeId)
+      if (!creative) return null
+      const url = await ctx.storage.getUrl(creative.storageId)
+      return { storageId: creative.storageId, fileName: creative.fileName, fileType: creative.fileType, url }
+    }
+    if (args.attachedLeadPhotoId) {
+      const photo = await ctx.db.get(args.attachedLeadPhotoId)
+      if (!photo) return null
+      const url = await ctx.storage.getUrl(photo.storageId)
+      return { storageId: photo.storageId, fileName: photo.fileName, fileType: photo.fileType, url }
+    }
+    return null
+  },
+})
+
 export const sendMessage = internalAction({
   args: { messageId: v.id("scheduledMessages") },
   handler: async (ctx, args) => {
@@ -340,6 +369,17 @@ export const sendMessage = internalAction({
       return
     }
 
+    // Check if this message has an attachment
+    const hasAttachment = !!(message.attachedCreativeId || message.attachedLeadPhotoId)
+    let attachmentInfo: { fileName: string; fileType: string; url: string | null } | null = null
+
+    if (hasAttachment) {
+      attachmentInfo = await ctx.runQuery(internal.messaging.getAttachmentInternal, {
+        attachedCreativeId: message.attachedCreativeId,
+        attachedLeadPhotoId: message.attachedLeadPhotoId,
+      })
+    }
+
     // Get WhatsApp session for the lead's assigned salesperson
     const waSession = await ctx.runQuery(internal.messaging.getWhatsappSessionByUserId, {
       userId: lead.assignedTo,
@@ -349,28 +389,70 @@ export const sendMessage = internalAction({
     const smsDevice = await ctx.runQuery(internal.messaging.getSmsDeviceInternal, {})
 
     let whatsappStatus = "skipped"
-    let smsStatus = "skipped"
+    let smsStatus = hasAttachment ? "skipped" : "skipped"
     let whatsappMessageId: string | undefined
     let smsMessageId: string | undefined
     let whatsappError: string | undefined
     let smsError: string | undefined
+    if (hasAttachment) {
+      smsError = "Media attachments not supported on SMS"
+    }
 
     // Send WhatsApp (if session connected and channel includes whatsapp)
     if (message.channels === "both" || message.channels === "whatsapp") {
       if (waSession && waSession.status === "connected" && waSession.bridgeSessionId) {
         try {
-          const res = await fetch(`${WBA_BASE_URL()}/messages/send`, {
-            method: "POST",
-            headers: {
-              "x-api-key": WBA_API_KEY(),
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
+          let res: Response
+
+          if (attachmentInfo?.url) {
+            // Fetch the file from Convex storage and send as media
+            const fileRes = await fetch(attachmentInfo.url)
+            if (!fileRes.ok) throw new Error("Failed to download attachment from storage")
+            const arrayBuffer = await fileRes.arrayBuffer()
+            const base64 = Buffer.from(arrayBuffer).toString("base64")
+
+            const isImage = attachmentInfo.fileType.startsWith("image/")
+            const mediaBody: Record<string, string> = {
               userId: waSession.bridgeSessionId,
               to: lead.mobileNumber,
-              message: message.message,
-            }),
-          })
+              type: isImage ? "image" : "document",
+              media: base64,
+            }
+
+            // Add caption (the message text)
+            if (message.message) {
+              mediaBody.caption = message.message
+            }
+
+            // For documents, add mimetype and filename
+            if (!isImage) {
+              mediaBody.mimetype = attachmentInfo.fileType
+              mediaBody.filename = attachmentInfo.fileName
+            }
+
+            res = await fetch(`${WBA_BASE_URL()}/messages/send-media`, {
+              method: "POST",
+              headers: {
+                "x-api-key": WBA_API_KEY(),
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(mediaBody),
+            })
+          } else {
+            // No attachment or URL missing — send plain text
+            res = await fetch(`${WBA_BASE_URL()}/messages/send`, {
+              method: "POST",
+              headers: {
+                "x-api-key": WBA_API_KEY(),
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                userId: waSession.bridgeSessionId,
+                to: lead.mobileNumber,
+                message: message.message,
+              }),
+            })
+          }
 
           if (res.ok) {
             const data = await res.json()
@@ -391,8 +473,8 @@ export const sendMessage = internalAction({
       }
     }
 
-    // Send SMS (if device online and channel includes sms)
-    if (message.channels === "both" || message.channels === "sms") {
+    // Send SMS (if device online and channel includes sms) — skip for media messages
+    if (!hasAttachment && (message.channels === "both" || message.channels === "sms")) {
       if (smsDevice && smsDevice.status !== "pending") {
         try {
           const res = await fetch(`${WBA_BASE_URL()}/sms/send`, {

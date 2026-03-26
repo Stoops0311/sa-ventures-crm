@@ -1,5 +1,7 @@
 "use client"
 
+import Link from "next/link"
+import { WhatsAppConnectCard } from "@/components/dashboard/whatsapp-connect"
 import { useCurrentUser } from "@/hooks/use-current-user"
 import { getGreeting } from "@/lib/date-utils"
 import { StatCardsRow } from "@/components/admin/stat-cards-row"
@@ -21,13 +23,22 @@ export default function AdminDashboard() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
+      <WhatsAppConnectCard />
       <h1 className="font-sans text-lg font-semibold">
         {greeting}, {firstName}
       </h1>
 
       <StatCardsRow />
 
-      <SalespersonPerformance />
+      <div>
+        <SalespersonPerformance />
+        <Link
+          href="/admin/performance"
+          className="inline-block mt-2 text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
+        >
+          View full performance table
+        </Link>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         <div className="lg:col-span-3">

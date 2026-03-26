@@ -1,3 +1,112 @@
+// Project Constants
+export const PROPERTY_TYPES = [
+  { value: "apartment", label: "Apartment" },
+  { value: "villa", label: "Villa" },
+  { value: "plot", label: "Plot" },
+  { value: "penthouse", label: "Penthouse" },
+  { value: "row_house", label: "Row House" },
+  { value: "commercial", label: "Commercial" },
+  { value: "studio", label: "Studio" },
+  { value: "duplex", label: "Duplex" },
+] as const
+
+export type PropertyTypeValue = (typeof PROPERTY_TYPES)[number]["value"]
+
+export const CONSTRUCTION_STATUSES = [
+  { value: "new_launch", label: "New Launch", bg: "bg-green-50", text: "text-green-700", border: "border-green-200" },
+  { value: "under_construction", label: "Under Construction", bg: "bg-yellow-50", text: "text-yellow-700", border: "border-yellow-200" },
+  { value: "ready_to_move", label: "Ready to Move", bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200" },
+] as const
+
+export type ConstructionStatusValue = (typeof CONSTRUCTION_STATUSES)[number]["value"]
+
+export function getConstructionStatusStyle(status: string) {
+  return (
+    CONSTRUCTION_STATUSES.find((s) => s.value === status) ?? {
+      value: status,
+      label: status,
+      bg: "bg-gray-100",
+      text: "text-gray-600",
+      border: "border-gray-200",
+    }
+  )
+}
+
+export const TRANSACTION_TYPES = [
+  { value: "new_property", label: "New Property" },
+  { value: "resale", label: "Resale" },
+] as const
+
+export type TransactionTypeValue = (typeof TRANSACTION_TYPES)[number]["value"]
+
+export const OWNERSHIP_TYPES = [
+  { value: "freehold", label: "Freehold" },
+  { value: "leasehold", label: "Leasehold" },
+  { value: "cooperative", label: "Co-operative Society" },
+  { value: "power_of_attorney", label: "Power of Attorney" },
+] as const
+
+export type OwnershipTypeValue = (typeof OWNERSHIP_TYPES)[number]["value"]
+
+export const FURNISHING_STATUSES = [
+  { value: "unfurnished", label: "Unfurnished" },
+  { value: "semi_furnished", label: "Semi-Furnished" },
+  { value: "furnished", label: "Furnished" },
+] as const
+
+export type FurnishingStatusValue = (typeof FURNISHING_STATUSES)[number]["value"]
+
+export const POWER_BACKUP_OPTIONS = [
+  { value: "full", label: "Full" },
+  { value: "partial", label: "Partial" },
+  { value: "none", label: "None" },
+  { value: "generator", label: "Generator" },
+] as const
+
+export type PowerBackupValue = (typeof POWER_BACKUP_OPTIONS)[number]["value"]
+
+export const FACING_OPTIONS = [
+  { value: "north", label: "North" },
+  { value: "south", label: "South" },
+  { value: "east", label: "East" },
+  { value: "west", label: "West" },
+  { value: "north_east", label: "North-East" },
+  { value: "north_west", label: "North-West" },
+  { value: "south_east", label: "South-East" },
+  { value: "south_west", label: "South-West" },
+] as const
+
+export type FacingValue = (typeof FACING_OPTIONS)[number]["value"]
+
+export const OVERLOOKING_OPTIONS = [
+  { value: "garden", label: "Garden" },
+  { value: "pool", label: "Pool" },
+  { value: "main_road", label: "Main Road" },
+  { value: "park", label: "Park" },
+  { value: "open_area", label: "Open Area" },
+  { value: "hills", label: "Hills" },
+  { value: "sea", label: "Sea" },
+  { value: "lake", label: "Lake" },
+  { value: "city_view", label: "City View" },
+] as const
+
+export type OverlookingValue = (typeof OVERLOOKING_OPTIONS)[number]["value"]
+
+export const LANDMARK_TYPES = [
+  { value: "school", label: "School" },
+  { value: "hospital", label: "Hospital" },
+  { value: "metro", label: "Metro Station" },
+  { value: "railway", label: "Railway Station" },
+  { value: "bus_stop", label: "Bus Stop" },
+  { value: "mall", label: "Shopping Mall" },
+  { value: "atm", label: "ATM / Bank" },
+  { value: "restaurant", label: "Restaurant" },
+  { value: "airport", label: "Airport" },
+  { value: "park", label: "Park" },
+] as const
+
+export type LandmarkTypeValue = (typeof LANDMARK_TYPES)[number]["value"]
+
 export const LEAD_STATUSES = [
   {
     value: "New",
@@ -131,6 +240,13 @@ export const USER_ROLES = [
     bg: "bg-cyan-50",
     text: "text-cyan-700",
     border: "border-cyan-200",
+  },
+  {
+    value: "receptionist",
+    label: "Receptionist",
+    bg: "bg-pink-50",
+    text: "text-pink-700",
+    border: "border-pink-200",
   },
 ] as const
 
@@ -479,6 +595,56 @@ export function getInquiryStatusStyle(status: string) {
   )
 }
 
+// After-Sales Step Styles
+export const AFTER_SALES_STEP_STYLES = [
+  { value: "booking_form_fillup", label: "Booking Form Fill-up", shortLabel: "Booking Form", bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200" },
+  { value: "share_project_documents", label: "Share Project Documents", shortLabel: "Project Docs", bg: "bg-indigo-50", text: "text-indigo-700", border: "border-indigo-200" },
+  { value: "loan_document_collection", label: "Loan Document Collection", shortLabel: "Loan Docs", bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-200" },
+  { value: "loan_processing", label: "Loan Processing", shortLabel: "Loan Processing", bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200" },
+  { value: "ocr_payment_collection", label: "OCR / Down Payment", shortLabel: "OCR Payment", bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" },
+  { value: "draft_agreement_preparation", label: "Draft Agreement", shortLabel: "Draft Agreement", bg: "bg-cyan-50", text: "text-cyan-700", border: "border-cyan-200" },
+  { value: "stamp_duty_payment", label: "Stamp Duty Payment", shortLabel: "Stamp Duty", bg: "bg-orange-50", text: "text-orange-700", border: "border-orange-200" },
+  { value: "registration", label: "Property Registration", shortLabel: "Registration", bg: "bg-rose-50", text: "text-rose-700", border: "border-rose-200" },
+  { value: "original_document_collection", label: "Original Documents", shortLabel: "Original Docs", bg: "bg-violet-50", text: "text-violet-700", border: "border-violet-200" },
+  { value: "bank_disbursement", label: "Bank Disbursement", shortLabel: "Disbursement", bg: "bg-green-50", text: "text-green-700", border: "border-green-200" },
+] as const
+
+export type AfterSalesStepValue = (typeof AFTER_SALES_STEP_STYLES)[number]["value"]
+
+export function getAfterSalesStepStyle(step: string) {
+  return (
+    AFTER_SALES_STEP_STYLES.find((s) => s.value === step) ?? {
+      value: step,
+      label: step,
+      shortLabel: step,
+      bg: "bg-gray-50",
+      text: "text-gray-700",
+      border: "border-gray-200",
+    }
+  )
+}
+
+// After-Sales Process Status Styles
+export const AFTER_SALES_STATUS_STYLES = [
+  { value: "in_progress", label: "In Progress", bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200" },
+  { value: "completed", label: "Completed", bg: "bg-green-50", text: "text-green-700", border: "border-green-200" },
+  { value: "on_hold", label: "On Hold", bg: "bg-yellow-50", text: "text-yellow-700", border: "border-yellow-200" },
+] as const
+
+export type AfterSalesStatusValue = (typeof AFTER_SALES_STATUS_STYLES)[number]["value"]
+
+export function getAfterSalesStatusStyle(status: string) {
+  return (
+    AFTER_SALES_STATUS_STYLES.find((s) => s.value === status) ?? {
+      value: status,
+      label: status,
+      bg: "bg-gray-50",
+      text: "text-gray-700",
+      border: "border-gray-200",
+    }
+  )
+}
+
 // Article Categories
 export const ARTICLE_CATEGORIES = [
   { value: "market_news", label: "Market News" },
@@ -503,4 +669,123 @@ export const HR_QUERY_TYPE_STYLES = [
 
 export function getHrQueryTypeLabel(type: string) {
   return HR_QUERY_TYPE_STYLES.find((t) => t.value === type)?.label ?? type
+}
+
+// Visit Check-in Styles
+export const VISIT_CHECKIN_STYLES = [
+  { value: "expected", label: "Expected", bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200" },
+  { value: "arrived", label: "Arrived", bg: "bg-green-50", text: "text-green-700", border: "border-green-200" },
+  { value: "no_show", label: "No Show", bg: "bg-red-50", text: "text-red-700", border: "border-red-200" },
+] as const
+
+export type VisitCheckinValue = (typeof VISIT_CHECKIN_STYLES)[number]["value"]
+
+export function getVisitCheckinStyle(status: string) {
+  return (
+    VISIT_CHECKIN_STYLES.find((s) => s.value === status) ?? {
+      value: status,
+      label: status,
+      bg: "bg-gray-50",
+      text: "text-gray-700",
+      border: "border-gray-200",
+    }
+  )
+}
+
+// Visit Location Styles
+export const VISIT_LOCATION_STYLES = [
+  { value: "office", label: "Office", bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-200" },
+  { value: "site", label: "Site Visit", bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" },
+  { value: "other", label: "Other", bg: "bg-gray-100", text: "text-gray-600", border: "border-gray-200" },
+] as const
+
+export type VisitLocationValue = (typeof VISIT_LOCATION_STYLES)[number]["value"]
+
+export function getVisitLocationStyle(location: string) {
+  return (
+    VISIT_LOCATION_STYLES.find((s) => s.value === location) ?? {
+      value: location,
+      label: location,
+      bg: "bg-gray-100",
+      text: "text-gray-600",
+      border: "border-gray-200",
+    }
+  )
+}
+
+// Petty Cash Type Styles
+export const PETTY_CASH_TYPE_STYLES = [
+  { value: "given", label: "Given", bg: "bg-red-50", text: "text-red-700", border: "border-red-200" },
+  { value: "returned", label: "Returned", bg: "bg-green-50", text: "text-green-700", border: "border-green-200" },
+] as const
+
+export type PettyCashTypeValue = (typeof PETTY_CASH_TYPE_STYLES)[number]["value"]
+
+export function getPettyCashTypeStyle(type: string) {
+  return (
+    PETTY_CASH_TYPE_STYLES.find((s) => s.value === type) ?? {
+      value: type,
+      label: type,
+      bg: "bg-gray-50",
+      text: "text-gray-700",
+      border: "border-gray-200",
+    }
+  )
+}
+
+// Active lead statuses (all except terminal won/lost)
+export const ACTIVE_LEAD_STATUSES = [
+  "New",
+  "No Response",
+  "Not Interested",
+  "Follow Up",
+  "Other Requirement",
+  "Visit Scheduled",
+  "Visit Done",
+  "Booking Done",
+] as const
+
+// Break Types
+export const BREAK_TYPES = [
+  { value: "lunch",             label: "Lunch Break" },
+  { value: "other_break",       label: "Other Break" },
+  { value: "training",          label: "Training" },
+  { value: "huddle",            label: "Huddle" },
+  { value: "onsite_visit",      label: "On Site Visit" },
+  { value: "offline_marketing", label: "Offline Marketing" },
+  { value: "other",             label: "Other" },
+] as const
+
+export type BreakTypeValue = (typeof BREAK_TYPES)[number]["value"]
+
+export function getBreakTypeLabel(value: string) {
+  return BREAK_TYPES.find((b) => b.value === value)?.label ?? value
+}
+
+// Petty Cash Category Styles
+export const PETTY_CASH_CATEGORY_STYLES = [
+  { value: "fuel", label: "Fuel", bg: "bg-orange-50", text: "text-orange-700", border: "border-orange-200" },
+  { value: "office_supplies", label: "Office Supplies", bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200" },
+  { value: "food_beverages", label: "Food & Beverages", bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200" },
+  { value: "travel", label: "Travel", bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-200" },
+  { value: "courier", label: "Courier / Postage", bg: "bg-teal-50", text: "text-teal-700", border: "border-teal-200" },
+  { value: "maintenance", label: "Maintenance", bg: "bg-yellow-50", text: "text-yellow-700", border: "border-yellow-200" },
+  { value: "stationery", label: "Stationery", bg: "bg-indigo-50", text: "text-indigo-700", border: "border-indigo-200" },
+  { value: "advance", label: "Advance", bg: "bg-rose-50", text: "text-rose-700", border: "border-rose-200" },
+  { value: "reimbursement", label: "Reimbursement", bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" },
+  { value: "other", label: "Other", bg: "bg-gray-100", text: "text-gray-600", border: "border-gray-200" },
+] as const
+
+export type PettyCashCategoryValue = (typeof PETTY_CASH_CATEGORY_STYLES)[number]["value"]
+
+export function getPettyCashCategoryStyle(category: string) {
+  return (
+    PETTY_CASH_CATEGORY_STYLES.find((s) => s.value === category) ?? {
+      value: category,
+      label: category,
+      bg: "bg-gray-100",
+      text: "text-gray-600",
+      border: "border-gray-200",
+    }
+  )
 }

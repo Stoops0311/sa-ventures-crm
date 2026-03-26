@@ -28,6 +28,8 @@ import {
   Edit01Icon,
   ContactBookIcon,
   Book02Icon,
+  ChartBarLineIcon,
+  BubbleChatIcon,
 } from "@hugeicons/core-free-icons"
 import {
   Sidebar,
@@ -48,6 +50,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { useCurrentUser } from "@/hooks/use-current-user"
+import { BreakToggle } from "@/components/break-time/break-toggle"
 import { useQuery } from "convex/react"
 import { api } from "@/convex/_generated/api"
 import { getRoleStyle } from "@/lib/constants"
@@ -67,6 +70,7 @@ interface NavItem {
   disabled?: boolean
   disabledTooltip?: string
   badge?: React.ReactNode
+  external?: boolean
 }
 
 const NAV_ITEMS: Record<UserRole, { items: NavItem[]; separatorAfter?: number[] }> = {
@@ -74,37 +78,47 @@ const NAV_ITEMS: Record<UserRole, { items: NavItem[]; separatorAfter?: number[] 
     items: [
       { label: "Dashboard", href: "/admin", icon: Home01Icon },
       { label: "Leads", href: "/admin/leads", icon: UserMultipleIcon },
+      { label: "After Sales", href: "/admin/after-sales", icon: TaskDone01Icon },
       { label: "Projects", href: "/admin/projects", icon: Building06Icon },
       { label: "Users", href: "/admin/users", icon: UserGroupIcon },
+      { label: "Performance", href: "/admin/performance", icon: ChartBarLineIcon },
       { label: "Attendance", href: "/admin/attendance", icon: UserCheck01Icon },
       { label: "Import", href: "/admin/import", icon: FileUploadIcon },
       { label: "Messages", href: "/admin/messages", icon: Message01Icon },
       { label: "Articles", href: "/admin/articles", icon: Edit01Icon },
       { label: "Inquiries", href: "/admin/inquiries", icon: ContactBookIcon },
       { label: "Vehicles", href: "/admin/vehicles", icon: Car01Icon },
+      { label: "Petty Cash", href: "/admin/petty-cash", icon: MoneyBag02Icon },
+      { label: "DSM Commissions", href: "/admin/commissions", icon: MoneyBag02Icon },
       { label: "My HR", href: "/admin/hr", icon: UserAccountIcon },
       { label: "Activity Log", href: "/admin/activity", icon: Clock01Icon },
       { label: "Settings", href: "/admin/settings", icon: Settings01Icon },
+      { label: "Chat", href: "https://workspace.saventuresgroup.in/", icon: BubbleChatIcon, external: true },
     ],
-    separatorAfter: [8, 10], // separator after "Inquiries", after "Vehicles" + "My HR"
+    separatorAfter: [10, 14, 16], // separator after "Inquiries", after "My HR", after "Settings"
   },
   salesperson: {
     items: [
       { label: "Dashboard", href: "/dashboard", icon: Home01Icon },
       { label: "My Leads", href: "/dashboard/leads", icon: UserMultipleIcon },
+      { label: "After Sales", href: "/dashboard/after-sales", icon: TaskDone01Icon },
       { label: "Messages", href: "/dashboard/messages", icon: Message01Icon },
       { label: "My Attendance", href: "/dashboard/attendance", icon: UserCheck01Icon },
       { label: "My HR", href: "/dashboard/hr", icon: UserAccountIcon },
       { label: "Activity Log", href: "/dashboard/activity", icon: Clock01Icon },
+      { label: "Chat", href: "https://workspace.saventuresgroup.in/", icon: BubbleChatIcon, external: true },
     ],
-    separatorAfter: [3, 4], // separator after "My Attendance", after "My HR"
+    separatorAfter: [4, 5, 6], // separator after "My Attendance", after "My HR", after "Activity Log"
   },
   dsm: {
     items: [
       { label: "Dashboard", href: "/dsm", icon: Home01Icon },
       { label: "My Submissions", href: "/dsm/submissions", icon: TaskDone01Icon },
+      { label: "My Commissions", href: "/dsm/commissions", icon: MoneyBag02Icon },
       { label: "Training", href: "/dsm/training", icon: Book02Icon },
+      { label: "Chat", href: "https://workspace.saventuresgroup.in/", icon: BubbleChatIcon, external: true },
     ],
+    separatorAfter: [2, 3], // separator after "My Commissions", after "Training"
   },
   hr: {
     items: [
@@ -116,9 +130,11 @@ const NAV_ITEMS: Record<UserRole, { items: NavItem[]; separatorAfter?: number[] 
       { label: "Insurance", href: "/hr/insurance", icon: Shield01Icon },
       { label: "Queries", href: "/hr/queries", icon: HelpCircleIcon },
       { label: "Suggestions", href: "/hr/suggestions", icon: BulbIcon },
+      { label: "Petty Cash", href: "/hr/petty-cash", icon: MoneyBag02Icon },
       { label: "My Attendance", href: "/hr/attendance", icon: UserCheck01Icon },
+      { label: "Chat", href: "https://workspace.saventuresgroup.in/", icon: BubbleChatIcon, external: true },
     ],
-    separatorAfter: [4, 7], // separator after "Payroll", after "Suggestions"
+    separatorAfter: [4, 8, 9], // separator after "Payroll", after "Petty Cash", after "My Attendance"
   },
   vehicle: {
     items: [
@@ -127,8 +143,19 @@ const NAV_ITEMS: Record<UserRole, { items: NavItem[]; separatorAfter?: number[] 
       { label: "Trips", href: "/vehicle/trips", icon: Route01Icon },
       { label: "GPS Tracking", href: "/vehicle/gps", icon: Location01Icon },
       { label: "My Attendance", href: "/vehicle/attendance", icon: UserCheck01Icon },
+      { label: "Chat", href: "https://workspace.saventuresgroup.in/", icon: BubbleChatIcon, external: true },
     ],
-    separatorAfter: [2, 3], // separator after "Trips", after "GPS Tracking"
+    separatorAfter: [2, 3, 4], // separator after "Trips", after "GPS Tracking", after "My Attendance"
+  },
+  receptionist: {
+    items: [
+      { label: "Dashboard", href: "/receptionist", icon: Home01Icon },
+      { label: "Petty Cash", href: "/receptionist/petty-cash", icon: MoneyBag02Icon },
+      { label: "Report", href: "/receptionist/petty-cash/report", icon: ChartBarLineIcon },
+      { label: "My Attendance", href: "/receptionist/attendance", icon: UserCheck01Icon },
+      { label: "Chat", href: "https://workspace.saventuresgroup.in/", icon: BubbleChatIcon, external: true },
+    ],
+    separatorAfter: [2, 3], // separator after "Report", after "My Attendance"
   },
 }
 
@@ -165,7 +192,7 @@ export function AppSidebar({ role }: AppSidebarProps) {
   )
 
   function isActive(href: string) {
-    if (href === "/admin" || href === "/dashboard" || href === "/dsm" || href === "/hr" || href === "/vehicle") {
+    if (href === "/admin" || href === "/dashboard" || href === "/dsm" || href === "/hr" || href === "/vehicle" || href === "/receptionist") {
       return pathname === href
     }
     return pathname.startsWith(href)
@@ -205,6 +232,16 @@ export function AppSidebar({ role }: AppSidebarProps) {
                         {item.disabledTooltip}
                       </TooltipContent>
                     </Tooltip>
+                  ) : item.external ? (
+                    <SidebarMenuButton
+                      asChild
+                      tooltip={item.label}
+                    >
+                      <a href={item.href} target="_blank" rel="noopener noreferrer">
+                        <HugeiconsIcon icon={item.icon} strokeWidth={2} />
+                        <span>{item.label}</span>
+                      </a>
+                    </SidebarMenuButton>
                   ) : (
                     <SidebarMenuButton
                       asChild
@@ -249,6 +286,7 @@ export function AppSidebar({ role }: AppSidebarProps) {
       </SidebarContent>
 
       <SidebarFooter>
+        {role !== "dsm" && <BreakToggle />}
         <SidebarMenu>
           <SidebarMenuItem>
             <Popover>

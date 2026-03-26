@@ -17,4 +17,11 @@ crons.interval(
   internal.messaging.processScheduledMessages
 )
 
+// Auto-close stale breaks (forgotten/browser closed) every 15 minutes
+crons.interval(
+  "cleanup stale breaks",
+  { minutes: 15 },
+  internal.breakTime.cleanupStaleBreaks
+)
+
 export default crons

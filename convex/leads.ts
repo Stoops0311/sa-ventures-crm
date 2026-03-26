@@ -12,6 +12,7 @@ import {
 import { internal } from "./_generated/api"
 import { logActivity } from "./lib/activityLogger"
 import { isValidLeadStatus, LEAD_STATUSES } from "./lib/constants"
+import { buildInitialSteps } from "./afterSales"
 import { resolveTemplate } from "./lib/templateResolver"
 
 // ─── Queries ──────────────────────────────────────────────────────────────────
@@ -405,6 +406,10 @@ export const updateStatus = mutation({
     status: v.string(),
     remark: v.optional(v.string()),
     followUpDate: v.optional(v.number()),
+    // Visit fields (required when status = "Visit Scheduled")
+    visitLocation: v.optional(v.string()), // "office" | "site" | "other"
+    visitDate: v.optional(v.number()), // epoch ms
+    visitAddress: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const user = await requireUserWithAnyRole(ctx, [
@@ -429,6 +434,15 @@ export const updateStatus = mutation({
 
     if (args.status === "Follow Up" && !args.followUpDate) {
       throw new Error("followUpDate is required when setting status to Follow Up")
+    }
+
+    if (args.status === "Visit Scheduled") {
+      if (!args.visitLocation) {
+        throw new Error("visitLocation is required when setting status to Visit Scheduled")
+      }
+      if (!args.visitDate) {
+        throw new Error("visitDate is required when setting status to Visit Scheduled")
+      }
     }
 
     const oldStatus = lead.status
@@ -534,6 +548,156 @@ export const updateStatus = mutation({
           }
         }
       }
+
+      // Visit management on status change
+      if (args.status === "Visit Scheduled" && args.visitLocation && args.visitDate) {
+        // Cancel any existing "expected" visits for this lead
+        const existingVisits = await ctx.db
+          .query("visits")
+          .withIndex("byLeadId", (q) => q.eq("leadId", args.leadId))
+          .collect()
+        for (const visit of existingVisits) {
+          if (visit.checkinStatus === "expected") {
+            await ctx.db.patch(visit._id, {
+              checkinStatus: "no_show",
+              updatedAt: now,
+            })
+          }
+        }
+
+        // Create new visit record
+        await ctx.db.insert("visits", {
+          visitType: "scheduled",
+          leadId: args.leadId,
+          projectId: lead.projectId,
+          assignedTo: lead.assignedTo,
+          visitLocation: args.visitLocation,
+          visitAddress: args.visitAddress,
+          visitDate: args.visitDate,
+          checkinStatus: "expected",
+          createdBy: user._id,
+          createdAt: now,
+          updatedAt: now,
+        })
+
+        await logActivity(ctx, {
+          entityType: "visit",
+          entityId: args.leadId,
+          action: "visit_scheduled",
+          details: {
+            location: args.visitLocation,
+            visitDate: args.visitDate,
+            address: args.visitAddress,
+          },
+          performedBy: user._id,
+        })
+      }
+
+      // Auto-mark visit as arrived when status changes to "Visit Done"
+      if (args.status === "Visit Done") {
+        const visits = await ctx.db
+          .query("visits")
+          .withIndex("byLeadId", (q) => q.eq("leadId", args.leadId))
+          .collect()
+        const expectedVisit = visits.find((v) => v.checkinStatus === "expected")
+        if (expectedVisit) {
+          await ctx.db.patch(expectedVisit._id, {
+            checkinStatus: "arrived",
+            checkinAt: now,
+            checkinBy: user._id,
+            updatedAt: now,
+          })
+        }
+      }
+
+      // Cancel expected visits when moving away from "Visit Scheduled"
+      if (oldStatus === "Visit Scheduled" && args.status !== "Visit Scheduled" && args.status !== "Visit Done") {
+        const visits = await ctx.db
+          .query("visits")
+          .withIndex("byLeadId", (q) => q.eq("leadId", args.leadId))
+          .collect()
+        for (const visit of visits) {
+          if (visit.checkinStatus === "expected") {
+            await ctx.db.patch(visit._id, {
+              checkinStatus: "no_show",
+              updatedAt: now,
+            })
+          }
+        }
+      }
+
+      // Auto-create after-sales process when status changes to "Booking Done"
+      if (args.status === "Booking Done") {
+        const existingProcess = await ctx.db
+          .query("afterSalesProcesses")
+          .withIndex("byLeadId", (q) => q.eq("leadId", args.leadId))
+          .unique()
+
+        if (!existingProcess) {
+          const steps = buildInitialSteps()
+          const processId = await ctx.db.insert("afterSalesProcesses", {
+            leadId: args.leadId,
+            assignedTo: lead.assignedTo,
+            projectId: lead.projectId,
+            status: "in_progress",
+            currentStep: "booking_form_fillup",
+            steps: JSON.stringify(steps),
+            createdAt: now,
+            updatedAt: now,
+          })
+
+          await logActivity(ctx, {
+            entityType: "after_sales",
+            entityId: processId,
+            action: "process_auto_created",
+            details: {
+              leadId: args.leadId,
+              trigger: "booking_done_status",
+            },
+            performedBy: user._id,
+          })
+        }
+      }
+
+      // Auto-create DSM commission when status changes to "Closed Won"
+      if (args.status === "Closed Won" && lead.submittedBy && lead.source === "dsm") {
+        // Check for duplicate commission
+        const existingCommission = await ctx.db
+          .query("dsmCommissionEntries")
+          .withIndex("byLeadId", (q) => q.eq("leadId", args.leadId))
+          .first()
+
+        if (!existingCommission) {
+          const project = await ctx.db.get(lead.projectId)
+          if (project?.dsmCommissionAmount && project.dsmCommissionAmount > 0) {
+            const commissionId = await ctx.db.insert("dsmCommissionEntries", {
+              dsmUserId: lead.submittedBy,
+              type: "credit",
+              amount: project.dsmCommissionAmount,
+              leadId: args.leadId,
+              projectId: lead.projectId,
+              description: `Commission for ${lead.name} — ${project.name}`,
+              isAutoGenerated: true,
+              isVoided: false,
+              createdBy: user._id,
+              createdAt: now,
+            })
+
+            await logActivity(ctx, {
+              entityType: "dsm_commission",
+              entityId: commissionId,
+              action: "commission_earned",
+              details: {
+                dsmUserId: lead.submittedBy,
+                leadName: lead.name,
+                projectName: project.name,
+                amount: project.dsmCommissionAmount,
+              },
+              performedBy: user._id,
+            })
+          }
+        }
+      }
     }
   },
 })
@@ -574,6 +738,19 @@ export const reassign = mutation({
       },
       performedBy: user._id,
     })
+
+    // Cascade reassign to after-sales process if one exists
+    const afterSalesProcess = await ctx.db
+      .query("afterSalesProcesses")
+      .withIndex("byLeadId", (q) => q.eq("leadId", args.leadId))
+      .unique()
+
+    if (afterSalesProcess) {
+      await ctx.db.patch(afterSalesProcess._id, {
+        assignedTo: args.newAssignedTo,
+        updatedAt: Date.now(),
+      })
+    }
   },
 })
 

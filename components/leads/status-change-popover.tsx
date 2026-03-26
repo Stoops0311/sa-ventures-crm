@@ -17,15 +17,14 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
+import { DateTimePicker } from "@/components/shared/date-time-picker"
 import { Label } from "@/components/ui/label"
-import { LEAD_STATUSES } from "@/lib/constants"
+import { LEAD_STATUSES, VISIT_LOCATION_STYLES } from "@/lib/constants"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { Loading03Icon, Calendar03Icon } from "@hugeicons/core-free-icons"
+import { Loading03Icon } from "@hugeicons/core-free-icons"
 import { toast } from "sonner"
-import { format } from "date-fns"
-import { cn } from "@/lib/utils"
 
 export function StatusChangePopover({
   leadId,
@@ -40,10 +39,14 @@ export function StatusChangePopover({
   const [status, setStatus] = useState(currentStatus)
   const [remark, setRemark] = useState("")
   const [followUpDate, setFollowUpDate] = useState<Date | undefined>(undefined)
-  const [showCalendar, setShowCalendar] = useState(false)
+  const [visitLocation, setVisitLocation] = useState<string>("")
+  const [visitDate, setVisitDate] = useState<Date | undefined>(undefined)
+  const [visitAddress, setVisitAddress] = useState("")
   const [isSaving, setIsSaving] = useState(false)
 
   const updateStatus = useMutation(api.leads.updateStatus)
+
+  const needsExpanded = status === "Follow Up" || status === "Visit Scheduled"
 
   const handleSave = async () => {
     if (isSaving) return
@@ -51,6 +54,17 @@ export function StatusChangePopover({
     if (status === "Follow Up" && !followUpDate) {
       toast.error("Please select a follow-up date")
       return
+    }
+
+    if (status === "Visit Scheduled") {
+      if (!visitLocation) {
+        toast.error("Please select a visit location")
+        return
+      }
+      if (!visitDate) {
+        toast.error("Please select a visit date & time")
+        return
+      }
     }
 
     setIsSaving(true)
@@ -62,6 +76,16 @@ export function StatusChangePopover({
         followUpDate:
           status === "Follow Up" && followUpDate
             ? followUpDate.getTime()
+            : undefined,
+        visitLocation:
+          status === "Visit Scheduled" ? visitLocation : undefined,
+        visitDate:
+          status === "Visit Scheduled" && visitDate
+            ? visitDate.getTime()
+            : undefined,
+        visitAddress:
+          status === "Visit Scheduled" && visitAddress.trim()
+            ? visitAddress.trim()
             : undefined,
       })
       toast("Status updated")
@@ -79,7 +103,9 @@ export function StatusChangePopover({
   const resetForm = () => {
     setRemark("")
     setFollowUpDate(undefined)
-    setShowCalendar(false)
+    setVisitLocation("")
+    setVisitDate(undefined)
+    setVisitAddress("")
   }
 
   const handleOpenChange = (newOpen: boolean) => {
@@ -93,7 +119,7 @@ export function StatusChangePopover({
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>{trigger}</PopoverTrigger>
-      <PopoverContent className="w-80" align="start">
+      <PopoverContent className={needsExpanded ? "w-[340px]" : "w-80"} align="start">
         <div className="space-y-3">
           <div className="space-y-1.5">
             <Label className="text-xs font-medium">Status</Label>
@@ -129,39 +155,56 @@ export function StatusChangePopover({
 
           {status === "Follow Up" && (
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium">Follow-up Date</Label>
-              <Popover open={showCalendar} onOpenChange={setShowCalendar}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !followUpDate && "text-muted-foreground"
-                    )}
-                  >
-                    <HugeiconsIcon
-                      icon={Calendar03Icon}
-                      strokeWidth={2}
-                      className="size-4"
-                    />
-                    {followUpDate
-                      ? format(followUpDate, "MMM d, yyyy")
-                      : "Pick a date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={followUpDate}
-                    onSelect={(date) => {
-                      setFollowUpDate(date)
-                      setShowCalendar(false)
-                    }}
-                    disabled={(date) => date < new Date()}
-                  />
-                </PopoverContent>
-              </Popover>
+              <Label className="text-xs font-medium">Follow-up Date & Time</Label>
+              <DateTimePicker
+                value={followUpDate}
+                onChange={setFollowUpDate}
+              />
             </div>
+          )}
+
+          {status === "Visit Scheduled" && (
+            <>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium">Visit Location</Label>
+                <Select value={visitLocation} onValueChange={setVisitLocation}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select location..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {VISIT_LOCATION_STYLES.map((loc) => (
+                      <SelectItem key={loc.value} value={loc.value}>
+                        {loc.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium">Visit Date & Time</Label>
+                <DateTimePicker
+                  value={visitDate}
+                  onChange={setVisitDate}
+                />
+              </div>
+
+              {visitLocation === "other" && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium">
+                    Address{" "}
+                    <span className="text-muted-foreground font-normal">
+                      (optional)
+                    </span>
+                  </Label>
+                  <Input
+                    value={visitAddress}
+                    onChange={(e) => setVisitAddress(e.target.value)}
+                    placeholder="Enter address..."
+                  />
+                </div>
+              )}
+            </>
           )}
 
           <div className="flex items-center gap-2 pt-1">
