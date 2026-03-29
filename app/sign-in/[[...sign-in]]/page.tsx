@@ -10,7 +10,7 @@ export default function SignInPage() {
             Sales Pipeline Management
           </p>
         </div>
-        <SignIn />
+        <SignIn fallbackRedirectUrl="/redirect" />
       </div>
     </div>
   )
