@@ -19,6 +19,7 @@ const isPublicRoute = createRouteMatcher([
   "/partner",
 ])
 
+const isSignInRoute = createRouteMatcher(["/sign-in(.*)"])
 const isAdminRoute = createRouteMatcher(["/admin(.*)"])
 const isDSMRoute = createRouteMatcher(["/dsm(.*)"])
 const isDashboardRoute = createRouteMatcher(["/dashboard(.*)"])
@@ -36,8 +37,23 @@ const roleHomeRoutes: Record<string, string> = {
 }
 
 export default clerkMiddleware(async (auth, req) => {
-  // Public routes are accessible to everyone (logged in or not)
-  if (isPublicRoute(req)) return
+  // Non-sign-in public routes are accessible to everyone
+  if (isPublicRoute(req) && !isSignInRoute(req)) return
+
+  // Redirect authenticated users away from sign-in to their dashboard
+  if (isSignInRoute(req)) {
+    const session = await auth()
+    if (session.userId) {
+      const redirectUrl = req.nextUrl.searchParams.get("redirect_url")
+      if (redirectUrl && redirectUrl.startsWith("/")) {
+        return NextResponse.redirect(new URL(redirectUrl, req.url))
+      }
+      const role = (session.sessionClaims?.metadata?.role as string) ?? "dsm"
+      const homeRoute = roleHomeRoutes[role] ?? "/dsm"
+      return NextResponse.redirect(new URL(homeRoute, req.url))
+    }
+    return
+  }
 
   const session = await auth()
 
