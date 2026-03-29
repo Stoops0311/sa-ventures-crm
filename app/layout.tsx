@@ -22,6 +22,8 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider
+      signInFallbackRedirectUrl="/dashboard"
+      signUpFallbackRedirectUrl="/dashboard"
       appearance={{
         variables: {
           borderRadius: "0px",
